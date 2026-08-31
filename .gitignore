@@ -1,0 +1,14 @@
+# Beroenden
+node_modules/
+
+# Miljövariabler och hemligheter
+.env
+.env.local
+
+# Loggar
+npm-debug.log*
+*.log
+
+# OS-skräp
+.DS_Store
+Thumbs.db
