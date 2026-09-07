@@ -1,58 +1,10 @@
-import { supabase } from "./db.js";
-
-export async function hamtaAllaRecept() {
-  const { data, error } = await supabase
-    .from("recipes")
-    .select("*")
-    .order("scraped_at", { ascending: false });
-
-  if (error) throw new Error(`Kunde inte hämta: ${error.message}`);
-  return data;
-}
-
-function esc(text) {
-  return String(text ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-export function receptTillHtml(r) {
-  const ingredienser = r.ingredients
-    .map((i) => `<li>${esc(i)}</li>`)
-    .join("\n");
-
-  const steg = r.instructions
-    .map((s) => `<li>${esc(s)}</li>`)
-    .join("\n");
-
-  const tider = [
-    r.prep_minutes && `Förberedelse ${r.prep_minutes} min`,
-    r.cook_minutes && `Tillagning ${r.cook_minutes} min`,
-    r.servings && `${esc(r.servings)} portioner`,
-  ]
-    .filter(Boolean)
-    .map((t) => `<span>${t}</span>`)
-    .join("");
-
-  return `
-<article class="recept">
-  ${r.image_url ? `<img src="${esc(r.image_url)}" alt="">` : ""}
-  <div class="innehall">
-    <h2>${esc(r.title)}</h2>
-    <p class="ingress">${esc(r.description)}</p>
-    <div class="meta">${tider}</div>
-    <h3>Ingredienser</h3>
-    <ul class="ingredienser">${ingredienser}</ul>
-    <h3>Gör så här</h3>
-    <ol class="steg">${steg}</ol>
-    <a class="kalla" href="${esc(r.source_url)}">Källa: ${esc(r.author ?? "okänd")}</a>
-  </div>
-</article>`;
-}
-
-const CSS = `
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mina recept</title>
+<style>
   :root {
     --bg: #faf8f5;
     --kort: #ffffff;
@@ -164,20 +116,31 @@ const CSS = `
     font-size: .8rem;
     color: var(--dampad);
   }
-`;
-
-export function byggSida(recept) {
-  const kort = recept.map(receptTillHtml).join("\n");
-  return `<!DOCTYPE html>
-<html lang="sv">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mina recept</title>
-<style>${CSS}</style>
+</style>
 </head>
 <body>
-${kort}
+
+<article class="recept">
+  <img src="https://baraenkakatill.se/wp-content/uploads/2013/07/grillad-flankstek-chimichurri-scaled.jpg" alt="">
+  <div class="innehall">
+    <h2>Chimichurri - supergott tillbehör till grillat!</h2>
+    <p class="ingress">Den kryddiga örtröran chimichurri ger fantastisk smak till grillat kött! Den sätter sting på köttet som blir extra saftigt och gott.</p>
+    <div class="meta"><span>Förberedelse 5 min</span><span>Tillagning 5 min</span><span>4 portioner</span></div>
+    <h3>Ingredienser</h3>
+    <ul class="ingredienser"><li>1 kruka färsk timjan</li>
+<li>1 kruka färsk persilja</li>
+<li>1 röd chilifrukt</li>
+<li>2 vitlöksklyftor</li>
+<li>0.5 dl olivolja</li>
+<li>ca 1 msk vitvinsvinäger</li>
+<li>salt och peppar</li></ul>
+    <h3>Gör så här</h3>
+    <ol class="steg"><li>Hacka timjan, persilja och chilifrukt och lägg i en skål.</li>
+<li>Pressa ner vitlöksklyftor och rör ner olivolja och vitvinsvinäger. Smaka av med salt och peppar.</li>
+<li>Låt gärna chimichurrin stå framme ett tag och stå till sig, och smaka sedan av med eventuellt mer salt och peppar.</li>
+<li>Vid servering, skär upp grillat kött i bitar, och skeda över chimichurri.</li></ol>
+    <a class="kalla" href="https://baraenkakatill.se/chimichurri/">Källa: Helena</a>
+  </div>
+</article>
 </body>
-</html>`;
-}
+</html>
