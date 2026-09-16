@@ -1,70 +1,4 @@
-import { supabase } from "./db.js";
-
-export async function hamtaAllaRecept() {
-  const { data, error } = await supabase
-    .from("recipes")
-    .select("*")
-    .order("scraped_at", { ascending: false });
-
-  if (error) throw new Error(`Kunde inte hämta: ${error.message}`);
-  return data;
-}
-
-function esc(text) {
-  return String(text ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-export function receptTillHtml(r) {
-  const ingredienser = r.ingredients
-    .map((i) => `<li>${esc(i)}</li>`)
-    .join("\n");
-
-  const steg = r.instructions
-    .map((s) => `<li>${esc(s)}</li>`)
-    .join("\n");
-
-  const tider = [
-    r.prep_minutes && `Förberedelse ${r.prep_minutes} min`,
-    r.cook_minutes && `Tillagning ${r.cook_minutes} min`,
-    r.servings && `${esc(r.servings)} portioner`,
-  ]
-    .filter(Boolean)
-    .map((t) => `<span>${t}</span>`)
-    .join("");
-
-      const sokText = [
-    r.title,
-    r.description,
-    r.author,
-    ...r.ingredients,
-    ...r.instructions,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  return `
-<article class="recept" data-sok="${esc(sokText)}">
-  ${r.image_url ? `<img src="${esc(r.image_url)}" alt="">` : ""}
-  <div class="innehall">
-    <h2>${esc(r.title)}</h2>
-    <p class="ingress">${esc(r.description)}</p>
-    <div class="meta">${tider}</div>
-    <h3>Ingredienser</h3>
-    <ul class="ingredienser">${ingredienser}</ul>
-    <h3>Gör så här</h3>
-    <ol class="steg">${steg}</ol>
-    <a class="kalla" href="${esc(r.source_url)}">Källa: ${esc(r.author ?? "okänd")}</a>
-  </div>
-</article>`;
-}
-
-const CSS = `
-  :root {
+:root {
     --bg: #faf8f5;
     --kort: #ffffff;
     --text: #2b2724;
@@ -207,46 +141,40 @@ const CSS = `
     margin: .9rem 0 0;
     min-height: 1.2em;
   }
-`;
 
-export function byggSida(recept) {
-  const kort = recept.map(receptTillHtml).join("\n");
-  return `<!DOCTYPE html>
-<html lang="sv">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mina recept</title>
-<style>${CSS}</style>
-</head>
-<body>
-<header class="topp">
-  <h1>Mina recept</h1>
-  <input type="search" id="sok" placeholder="Sök på ingrediens, titel eller ord…" autocomplete="off">
-  <p id="status"></p>
-</header>
-${kort}
-<script>
-  const falt = document.getElementById("sok");
-  const status = document.getElementById("status");
-  const kort = [...document.querySelectorAll(".recept")];
+  @media (max-width: 640px) {
+  body {
+    padding: 1.5rem .75rem;
+  }
+  .recept {
+    margin-bottom: 2rem;
+    border-radius: 8px;
+  }
+  .recept img {
+    height: 220px;
+  }
+  .innehall {
+    padding: 1.5rem 1.25rem;
+  }
+  h2 {
+    font-size: 1.5rem;
+  }
+  .meta {
+    gap: .75rem;
+    font-size: .72rem;
+  }
+  .steg li {
+    padding-left: 2.25rem;
+  }
+  .steg li::before {
+    font-size: 1.3rem;
+  }
+}
 
-  falt.addEventListener("input", () => {
-    const ord = falt.value.toLowerCase().split(/\\s+/).filter(Boolean);
-    let synliga = 0;
-
-    for (const el of kort) {
-      const text = el.dataset.sok;
-      const traff = ord.every((o) => text.includes(o));
-      el.hidden = !traff;
-      if (traff) synliga++;
-    }
-
-    status.textContent = ord.length === 0
-      ? ""
-      : \`\${synliga} av \${kort.length} recept\`;
-  });
-</script>
-</body>
-</html>`;
+.topp {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  padding: 1rem 0;
 }
