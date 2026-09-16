@@ -49,20 +49,56 @@ function receptTillHtml(r) {
 <article class="recept" data-sok="${esc(sokText)}">
   ${r.image_url ? `<img src="${esc(r.image_url)}" alt="" loading="lazy">` : ""}
   <div class="innehall">
-    <h2>${esc(r.title)}</h2>
+        <h2><a class="titel-lank" href="?recept=${r.id}">${esc(r.title)}</a></h2>
     <p class="ingress">${esc(r.description)}</p>
     <div class="meta">${tider}</div>
     <h3>Ingredienser</h3>
     <ul class="ingredienser">${ingredienser}</ul>
     <h3>Gör så här</h3>
     <ol class="steg">${steg}</ol>
+        <button class="dela" data-id="${r.id}" data-titel="${esc(r.title)}">Dela recept</button>
     <a class="kalla" href="${esc(r.source_url)}">Källa: ${esc(r.author ?? "okänd")}</a>
   </div>
 </article>`;
 }
 
-const recept = await hamtaRecept();
+const params = new URLSearchParams(location.search);
+const valtId = params.get("recept");
+
+const alla = await hamtaRecept();
+const recept = valtId
+  ? alla.filter((r) => String(r.id) === valtId)
+  : alla;
+
 lista.innerHTML = recept.map(receptTillHtml).join("");
+
+lista.addEventListener("click", async (e) => {
+  const knapp = e.target.closest(".dela");
+  if (!knapp) return;
+
+  const url = new URL(`?recept=${knapp.dataset.id}`, location.href).href;
+  const titel = knapp.dataset.titel;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: titel, url });
+    } catch {
+      // Användaren avbröt delningen — inget att göra.
+    }
+  } else {
+    await navigator.clipboard.writeText(url);
+    knapp.textContent = "Länk kopierad";
+    setTimeout(() => (knapp.textContent = "Dela recept"), 2000);
+  }
+});
+
+if (valtId) {
+  document.querySelector(".topp").insertAdjacentHTML(
+    "afterbegin",
+    `<a class="tillbaka" href="./">← Alla recept</a>`
+  );
+  document.getElementById("sok").hidden = true;
+}
 
 const falt = document.getElementById("sok");
 const kort = [...document.querySelectorAll(".recept")];

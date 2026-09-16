@@ -178,3 +178,40 @@
   background: var(--bg);
   padding: 1rem 0;
 }
+
+.tillbaka {
+  display: inline-block;
+  margin-bottom: 1.25rem;
+  font-family: system-ui, sans-serif;
+  font-size: .82rem;
+  color: var(--dampad);
+  text-decoration: none;
+}
+.tillbaka:hover {
+  color: var(--accent);
+}
+
+.titel-lank {
+  color: inherit;
+  text-decoration: none;
+}
+.titel-lank:hover {
+  color: var(--accent);
+}
+
+.dela {
+  display: block;
+  margin-top: 1.5rem;
+  padding: .6rem 1.1rem;
+  border: 1px solid var(--linje);
+  border-radius: 999px;
+  background: transparent;
+  font-family: system-ui, sans-serif;
+  font-size: .82rem;
+  color: var(--dampad);
+  cursor: pointer;
+}
+.dela:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
