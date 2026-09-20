@@ -302,3 +302,25 @@ body.soker .topp h1 {
   overscroll-behavior: contain;
   padding-top: .5rem;
 }
+
+/* Tightare mellanrum när toppen är hopkrympt */
+body.soker .topp {
+  margin-bottom: 1rem;
+  padding: .75rem 0;
+}
+body.soker .topp h1 {
+  margin-bottom: .75rem;
+}
+body.soker .tillbaka {
+  margin-bottom: .5rem;
+}
+body.soker #status {
+  margin-top: .5rem;
+  min-height: 0;
+}
+body.soker #admin {
+  margin-top: .6rem;
+}
+body.soker #lista {
+  padding-top: 0;
+}
