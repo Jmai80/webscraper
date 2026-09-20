@@ -259,6 +259,9 @@
   font-size: .78rem !important;
   padding: .45rem 1rem !important;
 }
+#admin [hidden] {
+  display: none !important;
+}
 #spara-status,
 #login-fel {
   font-family: system-ui, sans-serif;
