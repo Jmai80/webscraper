@@ -215,3 +215,54 @@
   border-color: var(--accent);
   color: var(--accent);
 }
+
+#admin {
+  margin-top: 1rem;
+}
+#admin form {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+#admin input {
+  flex: 1;
+  min-width: 180px;
+  padding: .7rem 1rem;
+  border: 1px solid var(--linje);
+  border-radius: 999px;
+  background: var(--kort);
+  font-family: inherit;
+  font-size: .95rem;
+  color: inherit;
+}
+#admin input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+#admin button {
+  padding: .7rem 1.4rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  font-size: .85rem;
+  cursor: pointer;
+}
+#admin button:disabled {
+  opacity: .5;
+}
+.admin-knapp {
+  background: transparent !important;
+  border: 1px solid var(--linje) !important;
+  color: var(--dampad) !important;
+  font-size: .78rem !important;
+  padding: .45rem 1rem !important;
+}
+#spara-status,
+#login-fel {
+  font-family: system-ui, sans-serif;
+  font-size: .8rem;
+  color: var(--dampad);
+  margin: .7rem 0 0;
+}
