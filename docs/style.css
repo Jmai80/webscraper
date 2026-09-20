@@ -277,11 +277,10 @@
 
 /* Startvy — fyller fönstret tills man söker */
 .topp {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex: 0 0 auto;
+  padding-top: 2.5rem;
 }
+
 .topp h1 {
   font-size: clamp(2.5rem, 12vw, 4rem);
   transition: font-size .35s ease;
@@ -330,5 +329,36 @@ body.receptvy #admin {
   display: none;
 }
 body.receptvy .topp h1 {
+  display: none;
+}
+
+/* Miniatyrgrid på startskärmen */
+#grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding-bottom: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: .5rem;
+}
+#grid a {
+  display: block;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--linje);
+}
+#grid img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+body.soker #grid {
   display: none;
 }

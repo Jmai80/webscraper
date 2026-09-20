@@ -72,6 +72,14 @@ const recept = valtId
 
 lista.innerHTML = recept.map(receptTillHtml).join("");
 
+const grid = document.getElementById("grid");
+grid.innerHTML = alla
+  .filter((r) => r.image_url)
+  .map(
+    (r) => `<a href="?recept=${r.id}"><img src="${esc(r.image_url)}" alt="${esc(r.title)}" loading="lazy"></a>`
+  )
+  .join("");
+
 lista.addEventListener("click", async (e) => {
   const knapp = e.target.closest(".dela");
   if (!knapp) return;
