@@ -324,3 +324,8 @@ body.soker #admin {
 body.soker #lista {
   padding-top: 0;
 }
+
+/* Inget admin-fält i enskild receptvy */
+body.receptvy #admin {
+  display: none;
+}

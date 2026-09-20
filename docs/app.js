@@ -93,7 +93,7 @@ lista.addEventListener("click", async (e) => {
 });
 
 if (valtId) {
-  document.body.classList.add("soker");
+  document.body.classList.add("soker", "receptvy");
   document.querySelector(".topp").insertAdjacentHTML(
     "afterbegin",
     `<a class="tillbaka" href="./">← Alla recept</a>`
