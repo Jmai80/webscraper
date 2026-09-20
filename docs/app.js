@@ -93,6 +93,7 @@ lista.addEventListener("click", async (e) => {
 });
 
 if (valtId) {
+  document.body.classList.add("soker");
   document.querySelector(".topp").insertAdjacentHTML(
     "afterbegin",
     `<a class="tillbaka" href="./">← Alla recept</a>`
@@ -113,6 +114,7 @@ if (!valtId) {
 
 falt.addEventListener("input", () => {
   const ord = falt.value.toLowerCase().split(/\s+/).filter(Boolean);
+  document.body.classList.toggle("soker", ord.length > 0);
   let synliga = 0;
 
   for (const el of kort) {

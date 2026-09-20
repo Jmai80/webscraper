@@ -269,3 +269,23 @@
   color: var(--dampad);
   margin: .7rem 0 0;
 }
+
+/* Startvy — fyller fönstret tills man söker */
+.topp {
+  min-height: 80dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: min-height .35s ease;
+}
+.topp h1 {
+  font-size: clamp(2.5rem, 12vw, 4rem);
+  transition: font-size .35s ease;
+}
+
+body.soker .topp {
+  min-height: 0;
+}
+body.soker .topp h1 {
+  font-size: 1.4rem;
+}
