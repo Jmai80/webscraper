@@ -329,3 +329,6 @@ body.soker #lista {
 body.receptvy #admin {
   display: none;
 }
+body.receptvy .topp h1 {
+  display: none;
+}
