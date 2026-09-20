@@ -7,9 +7,14 @@
     --linje: #e8e2da;
   }
   * { box-sizing: border-box; }
+  html { height: 100%; }
   body {
     margin: 0;
-    padding: 3rem 1.5rem;
+    padding: 0 1.5rem;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
     background: var(--bg);
     color: var(--text);
     font-family: Georgia, "Times New Roman", serif;
@@ -144,7 +149,7 @@
 
   @media (max-width: 640px) {
   body {
-    padding: 1.5rem .75rem;
+    padding: 0 .75rem;
   }
   .recept {
     margin-bottom: 2rem;
@@ -272,11 +277,10 @@
 
 /* Startvy — fyller fönstret tills man söker */
 .topp {
-  min-height: 80dvh;
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  transition: min-height .35s ease;
 }
 .topp h1 {
   font-size: clamp(2.5rem, 12vw, 4rem);
@@ -284,10 +288,17 @@
 }
 
 body.soker .topp {
-  min-height: 0;
-  position: sticky;
-  top: 0;
+  flex: 0 0 auto;
 }
 body.soker .topp h1 {
   font-size: 1.4rem;
+}
+
+/* Listan är den enda ytan som scrollar */
+#lista {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: .5rem;
 }
