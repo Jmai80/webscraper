@@ -103,12 +103,20 @@ if (valtId) {
 const falt = document.getElementById("sok");
 const kort = [...document.querySelectorAll(".recept")];
 
+if (!valtId) {
+  for (const el of kort) el.hidden = true;
+}
+
+if (!valtId) {
+  for (const el of kort) el.hidden = true;
+}
+
 falt.addEventListener("input", () => {
   const ord = falt.value.toLowerCase().split(/\s+/).filter(Boolean);
   let synliga = 0;
 
   for (const el of kort) {
-    const traff = ord.every((o) => el.dataset.sok.includes(o));
+    const traff = ord.length > 0 && ord.every((o) => el.dataset.sok.includes(o));
     el.hidden = !traff;
     if (traff) synliga++;
   }

@@ -1,0 +1,1623 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: data/**, recept.html, package-lock.json
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+docs/
+  app.js
+  index.html
+  style.css
+src/
+  build.js
+  db.js
+  html.js
+  index.js
+  inspect.js
+  parse.js
+  save.js
+supabase/
+  functions/
+    scrape/
+      .npmrc
+      deno.json
+      index.ts
+  .gitignore
+  config.toml
+.gitignore
+package.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="src/build.js">
+import { writeFile } from "node:fs/promises";
+import { hamtaAllaRecept, byggSida } from "./html.js";
+
+const recept = await hamtaAllaRecept();
+await writeFile("recept.html", byggSida(recept), "utf-8");
+console.log(`Byggde recept.html med ${recept.length} recept`);
+</file>
+
+<file path="src/db.js">
+import { createClient } from "@supabase/supabase-js";
+
+const url = process.env.SUPABASE_URL;
+const key = process.env.SUPABASE_SECRET_KEY;
+
+if (!url || !key) {
+  throw new Error(
+    "SUPABASE_URL och SUPABASE_SECRET_KEY måste finnas i .env"
+  );
+}
+
+export const supabase = createClient(url, key, {
+  auth: { persistSession: false },
+});
+</file>
+
+<file path="src/inspect.js">
+import { readFile } from "node:fs/promises";
+import * as cheerio from "cheerio";
+
+const html = await readFile("data/raw/chimichurri.html", "utf-8");
+const $ = cheerio.load(html);
+
+function harTyp(nod, typ) {
+  const t = nod["@type"];
+  return Array.isArray(t) ? t.includes(typ) : t === typ;
+}
+
+let recept = null;
+
+$('script[type="application/ld+json"]').each((i, el) => {
+  const data = JSON.parse($(el).text());
+  const noder = data["@graph"] ?? (Array.isArray(data) ? data : [data]);
+  const traff = noder.find((nod) => harTyp(nod, "Recipe"));
+  if (traff) recept = traff;
+});
+
+if (!recept) {
+  console.log("Ingen Recipe hittades.");
+} else {
+  console.log(JSON.stringify(recept, null, 2));
+}
+</file>
+
+<file path="src/parse.js">
+import * as cheerio from "cheerio";
+
+function harTyp(nod, typ) {
+  const t = nod["@type"];
+  return Array.isArray(t) ? t.includes(typ) : t === typ;
+}
+
+function hittaRecept(html) {
+  const $ = cheerio.load(html);
+  let recept = null;
+
+  $('script[type="application/ld+json"]').each((i, el) => {
+    if (recept) return;
+    let data;
+    try {
+      data = JSON.parse($(el).text());
+    } catch {
+      return;
+    }
+    const noder = data["@graph"] ?? (Array.isArray(data) ? data : [data]);
+    recept = noder.find((nod) => harTyp(nod, "Recipe")) ?? null;
+  });
+
+  return recept;
+}
+
+function varaktighetTillMinuter(iso) {
+  if (typeof iso !== "string") return null;
+  const m = iso.match(/^PT(?:(\d+)H)?(?:(\d+)M)?$/);
+  if (!m) return null;
+  const timmar = Number(m[1] ?? 0);
+  const minuter = Number(m[2] ?? 0);
+  return timmar * 60 + minuter;
+}
+
+function valjBild(bild) {
+  const lista = Array.isArray(bild) ? bild : [bild];
+  const urler = lista
+    .map((b) => (typeof b === "string" ? b : b?.url))
+    .filter(Boolean);
+  // Varianter med -225x225 i namnet är nedskalade. Föredra originalet.
+  return urler.find((u) => !/-\d+x\d+\.\w+$/.test(u)) ?? urler[0] ?? null;
+}
+
+function textFranSteg(steg) {
+  if (!Array.isArray(steg)) return [];
+  return steg
+    .flatMap((s) => {
+      if (typeof s === "string") return s;
+      if (harTyp(s, "HowToSection")) return textFranSteg(s.itemListElement);
+      return s?.text ?? [];
+    })
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
+export function extraheraRecept(html, kallUrl) {
+  const r = hittaRecept(html);
+  if (!r) throw new Error(`Ingen Recipe hittades på ${kallUrl}`);
+
+  return {
+    source_url: r.url ?? kallUrl,
+    title: r.name?.trim() ?? null,
+    description: r.description?.trim() ?? null,
+    author: r.author?.name ?? null,
+    image_url: valjBild(r.image),
+    ingredients: r.recipeIngredient ?? [],
+    instructions: textFranSteg(r.recipeInstructions),
+    prep_minutes: varaktighetTillMinuter(r.prepTime),
+    cook_minutes: varaktighetTillMinuter(r.cookTime),
+    total_minutes: varaktighetTillMinuter(r.totalTime),
+    servings: r.recipeYield ? String(r.recipeYield) : null,
+    published_at: r.datePublished ?? null,
+    scraped_at: new Date().toISOString(),
+  };
+}
+</file>
+
+<file path="src/save.js">
+import { supabase } from "./db.js";
+
+export async function sparaRecept(recept) {
+  const { data, error } = await supabase
+    .from("recipes")
+    .upsert(recept, { onConflict: "source_url" })
+    .select()
+    .single();
+
+  if (error) throw new Error(`Kunde inte spara: ${error.message}`);
+  return data;
+}
+</file>
+
+<file path="supabase/functions/scrape/.npmrc">
+# Configuration for private npm package dependencies
+# For more information on using private registries with Edge Functions, see:
+# https://supabase.com/docs/guides/functions/import-maps#importing-from-private-registries
+</file>
+
+<file path="supabase/functions/scrape/deno.json">
+{
+  "imports": {
+    "@supabase/functions-js": "jsr:@supabase/functions-js@^2",
+    "@supabase/server": "npm:@supabase/server@^1"
+  }
+}
+</file>
+
+<file path="supabase/.gitignore">
+# Supabase
+.branches
+.temp
+
+# dotenvx
+.env.keys
+.env.local
+.env.*.local
+</file>
+
+<file path="supabase/config.toml">
+# For detailed configuration reference documentation, visit:
+# https://supabase.com/docs/guides/local-development/cli/config
+# A string used to distinguish different Supabase projects on the same host. Defaults to the
+# working directory name when running `supabase init`.
+project_id = "webscraper"
+
+[api]
+enabled = true
+# Port to use for the API URL.
+port = 54321
+# Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
+# endpoints. `public` and `graphql_public` schemas are included by default.
+schemas = ["public", "graphql_public"]
+# Extra schemas to add to the search_path of every request.
+extra_search_path = ["public", "extensions"]
+# The maximum number of rows returns from a view, table, or stored procedure. Limits payload size
+# for accidental or malicious requests.
+max_rows = 1000
+# Controls whether new tables, views, sequences and functions created in the `public` schema by
+# `postgres` are reachable through the Data API roles (`anon`, `authenticated`, `service_role`)
+# without explicit GRANTs, matching the cloud default. Set to `false` to require explicit GRANTs
+# instead. Left unset, a fresh project falls back to `true`.
+# auto_expose_new_tables = true
+
+[api.tls]
+# Enable HTTPS endpoints locally using a self-signed certificate.
+enabled = false
+# Paths to self-signed certificate pair.
+# cert_path = "../certs/my-cert.pem"
+# key_path = "../certs/my-key.pem"
+
+[db]
+# Port to use for the local database URL.
+port = 54322
+# Port used by db diff command to initialize the shadow database.
+shadow_port = 54320
+# Maximum amount of time to wait for health check when starting the local database.
+health_timeout = "2m"
+# The database major version to use. This has to be the same as your remote database's. Run `SHOW
+# server_version;` on the remote database to check.
+major_version = 17
+
+[db.pooler]
+enabled = false
+# Port to use for the local connection pooler.
+port = 54329
+# Specifies when a server connection can be reused by other clients.
+# Configure one of the supported pooler modes: `transaction`, `session`.
+pool_mode = "transaction"
+# How many server connections to allow per user/database pair.
+default_pool_size = 20
+# Maximum number of client connections allowed.
+max_client_conn = 100
+
+# [db.vault]
+# secret_key = "env(SECRET_VALUE)"
+
+[db.migrations]
+# If disabled, migrations will be skipped during a db push or reset.
+enabled = true
+# Specifies an ordered list of schema files, directories, or glob patterns that describe your database.
+# Supports paths relative to supabase directory: "./schemas/*.sql", "./database".
+schema_paths = []
+
+[db.seed]
+# If enabled, seeds the database after migrations during a db reset.
+enabled = true
+# Specifies an ordered list of seed files to load during db reset.
+# Supports glob patterns relative to supabase directory: "./seeds/*.sql"
+sql_paths = ["./seed.sql"]
+
+[db.network_restrictions]
+# Enable management of network restrictions.
+enabled = false
+# List of IPv4 CIDR blocks allowed to connect to the database.
+# Defaults to allow all IPv4 connections. Set empty array to block all IPs.
+allowed_cidrs = ["0.0.0.0/0"]
+# List of IPv6 CIDR blocks allowed to connect to the database.
+# Defaults to allow all IPv6 connections. Set empty array to block all IPs.
+allowed_cidrs_v6 = ["::/0"]
+
+# Uncomment to reject non-secure connections to the database.
+# [db.ssl_enforcement]
+# enabled = true
+
+[realtime]
+enabled = true
+# Bind realtime via either IPv4 or IPv6. (default: IPv4)
+# ip_version = "IPv6"
+# The maximum length in bytes of HTTP request headers. (default: 4096)
+# max_header_length = 4096
+
+[studio]
+enabled = true
+# Port to use for Supabase Studio.
+port = 54323
+# External URL of the API server that frontend connects to.
+api_url = "http://127.0.0.1"
+# OpenAI API Key to use for Supabase AI in the Supabase Studio.
+openai_api_key = "env(OPENAI_API_KEY)"
+
+# Email testing server. Emails sent with the local dev setup are not actually sent - rather, they
+# are monitored, and you can view the emails that would have been sent from the web interface.
+[local_smtp]
+enabled = true
+# Port to use for the email testing server web interface.
+port = 54324
+# Uncomment to expose additional ports for testing user applications that send emails.
+# smtp_port = 54325
+# pop3_port = 54326
+# admin_email = "admin@email.com"
+# sender_name = "Admin"
+
+[storage]
+enabled = true
+# The maximum file size allowed (e.g. "5MB", "500KB").
+file_size_limit = "50MiB"
+
+# Uncomment to configure local storage buckets
+# [storage.buckets.images]
+# public = false
+# file_size_limit = "50MiB"
+# allowed_mime_types = ["image/png", "image/jpeg"]
+# objects_path = "./images"
+
+# Allow connections via S3 compatible clients
+[storage.s3_protocol]
+enabled = true
+
+# Image transformation API is available to Supabase Pro plan.
+# [storage.image_transformation]
+# enabled = true
+
+# Store analytical data in S3 for running ETL jobs over Iceberg Catalog
+# This feature is only available on the hosted platform.
+[storage.analytics]
+enabled = false
+max_namespaces = 5
+max_tables = 10
+max_catalogs = 2
+
+# Analytics Buckets is available to Supabase Pro plan.
+# [storage.analytics.buckets.my-warehouse]
+
+# Store vector embeddings in S3 for large and durable datasets
+[storage.vector]
+enabled = true
+max_buckets = 10
+max_indexes = 5
+
+# Vector Buckets is available to Supabase Pro plan.
+# [storage.vector.buckets.documents-openai]
+
+[auth]
+enabled = true
+# The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
+# in emails.
+site_url = "http://127.0.0.1:3000"
+# The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
+# external_url = ""
+# A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
+additional_redirect_urls = ["https://127.0.0.1:3000"]
+# How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
+jwt_expiry = 3600
+# JWT issuer URL. If not set, defaults to auth.external_url.
+# jwt_issuer = ""
+# Path to JWT signing key. DO NOT commit your signing keys file to git.
+# signing_keys_path = "./signing_keys.json"
+# If disabled, the refresh token will never expire.
+enable_refresh_token_rotation = true
+# Allows refresh tokens to be reused after expiry, up to the specified interval in seconds.
+# Requires enable_refresh_token_rotation = true.
+refresh_token_reuse_interval = 10
+# Allow/disallow new user signups to your project.
+enable_signup = true
+# Allow/disallow anonymous sign-ins to your project.
+enable_anonymous_sign_ins = false
+# Allow/disallow testing manual linking of accounts
+enable_manual_linking = false
+# Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
+minimum_password_length = 6
+# Passwords that do not meet the following requirements will be rejected as weak. Supported values
+# are: `letters_digits`, `lower_upper_letters_digits`, `lower_upper_letters_digits_symbols`
+password_requirements = ""
+
+# Configure passkey sign-ins.
+# [auth.passkey]
+# enabled = false
+
+# Configure WebAuthn relying party settings (required when passkey is enabled).
+# [auth.webauthn]
+# rp_display_name = "Supabase"
+# rp_id = "localhost"
+# rp_origins = ["http://127.0.0.1:3000"]
+
+[auth.rate_limit]
+# Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
+email_sent = 2
+# Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
+sms_sent = 30
+# Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
+anonymous_users = 30
+# Number of sessions that can be refreshed in a 5 minute interval per IP address.
+token_refresh = 150
+# Number of sign up and sign-in requests that can be made in a 5 minute interval per IP address (excludes anonymous users).
+sign_in_sign_ups = 30
+# Number of OTP / Magic link verifications that can be made in a 5 minute interval per IP address.
+token_verifications = 30
+# Number of Web3 logins that can be made in a 5 minute interval per IP address.
+web3 = 30
+
+# Configure one of the supported captcha providers: `hcaptcha`, `turnstile`.
+# [auth.captcha]
+# enabled = true
+# provider = "hcaptcha"
+# secret = ""
+
+[auth.email]
+# Allow/disallow new user signups via email to your project.
+enable_signup = true
+# If enabled, a user will be required to confirm any email change on both the old, and new email
+# addresses. If disabled, only the new email is required to confirm.
+double_confirm_changes = true
+# If enabled, users need to confirm their email address before signing in.
+enable_confirmations = false
+# If enabled, users will need to reauthenticate or have logged in recently to change their password.
+secure_password_change = false
+# Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
+max_frequency = "1s"
+# Number of characters used in the email OTP.
+otp_length = 6
+# Number of seconds before the email OTP expires (defaults to 1 hour).
+otp_expiry = 3600
+
+# Use a production-ready SMTP server
+# [auth.email.smtp]
+# enabled = true
+# host = "smtp.sendgrid.net"
+# port = 587
+# user = "apikey"
+# pass = "env(SENDGRID_API_KEY)"
+# admin_email = "admin@email.com"
+# sender_name = "Admin"
+
+# Uncomment to customize email template
+# [auth.email.template.invite]
+# subject = "You have been invited"
+# content_path = "./supabase/templates/invite.html"
+
+# Uncomment to customize notification email template
+# [auth.email.notification.password_changed]
+# enabled = true
+# subject = "Your password has been changed"
+# content_path = "./supabase/templates/password_changed_notification.html"
+
+[auth.sms]
+# Allow/disallow new user signups via SMS to your project.
+enable_signup = false
+# If enabled, users need to confirm their phone number before signing in.
+enable_confirmations = false
+# Template for sending OTP to users
+template = "Your code is {{ .Code }}"
+# Controls the minimum amount of time that must pass before sending another sms otp.
+max_frequency = "5s"
+
+# Use pre-defined map of phone number to OTP for testing.
+# [auth.sms.test_otp]
+# 4152127777 = "123456"
+
+# Configure logged in session timeouts.
+# [auth.sessions]
+# Force log out after the specified duration.
+# timebox = "24h"
+# Force log out if the user has been inactive longer than the specified duration.
+# inactivity_timeout = "8h"
+
+# This hook runs before a new user is created and allows developers to reject the request based on the incoming user object.
+# [auth.hook.before_user_created]
+# enabled = true
+# uri = "pg-functions://postgres/auth/before-user-created-hook"
+
+# This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
+# [auth.hook.custom_access_token]
+# enabled = true
+# uri = "pg-functions://<database>/<schema>/<hook_name>"
+
+# Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
+[auth.sms.twilio]
+enabled = false
+account_sid = ""
+message_service_sid = ""
+# DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
+auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
+
+# Multi-factor-authentication is available to Supabase Pro plan.
+[auth.mfa]
+# Control how many MFA factors can be enrolled at once per user.
+max_enrolled_factors = 10
+
+# Control MFA via App Authenticator (TOTP)
+[auth.mfa.totp]
+enroll_enabled = false
+verify_enabled = false
+
+# Configure MFA via Phone Messaging
+[auth.mfa.phone]
+enroll_enabled = false
+verify_enabled = false
+otp_length = 6
+template = "Your code is {{ .Code }}"
+max_frequency = "5s"
+
+# Configure MFA via WebAuthn
+# [auth.mfa.web_authn]
+# enroll_enabled = true
+# verify_enabled = true
+
+# Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
+# `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,
+# `twitter`, `x`, `slack`, `spotify`, `workos`, `zoom`.
+[auth.external.apple]
+enabled = false
+client_id = ""
+# DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
+secret = "env(SUPABASE_AUTH_EXTERNAL_APPLE_SECRET)"
+# Overrides the default auth callback URL derived from auth.external_url.
+redirect_uri = ""
+# Overrides the default auth provider URL. Used to support self-hosted gitlab, single-tenant Azure,
+# or any other third-party OIDC providers.
+url = ""
+# If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
+skip_nonce_check = false
+# If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
+email_optional = false
+
+# Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.
+# You can configure "web3" rate limit in the [auth.rate_limit] section and set up [auth.captcha] if self-hosting.
+[auth.web3.solana]
+enabled = false
+
+# Use Firebase Auth as a third-party provider alongside Supabase Auth.
+[auth.third_party.firebase]
+enabled = false
+# project_id = "my-firebase-project"
+
+# Use Auth0 as a third-party provider alongside Supabase Auth.
+[auth.third_party.auth0]
+enabled = false
+# tenant = "my-auth0-tenant"
+# tenant_region = "us"
+
+# Use AWS Cognito (Amplify) as a third-party provider alongside Supabase Auth.
+[auth.third_party.aws_cognito]
+enabled = false
+# user_pool_id = "my-user-pool-id"
+# user_pool_region = "us-east-1"
+
+# Use Clerk as a third-party provider alongside Supabase Auth.
+[auth.third_party.clerk]
+enabled = false
+# Obtain from https://clerk.com/setup/supabase
+# domain = "example.clerk.accounts.dev"
+
+# OAuth server configuration
+[auth.oauth_server]
+# Enable OAuth server functionality
+enabled = false
+# Path for OAuth consent flow UI
+authorization_url_path = "/oauth/consent"
+# Allow dynamic client registration
+allow_dynamic_registration = false
+
+[edge_runtime]
+enabled = true
+# Supported request policies: `oneshot`, `per_worker`.
+# `per_worker` (default) — enables hot reload during local development.
+# `oneshot` — fallback mode if hot reload causes issues (e.g. in large repos or with symlinks).
+policy = "per_worker"
+# Port to attach the Chrome inspector for debugging edge functions.
+inspector_port = 8083
+# The Deno major version to use.
+deno_version = 2
+
+# [edge_runtime.secrets]
+# secret_key = "env(SECRET_VALUE)"
+
+[analytics]
+enabled = true
+port = 54327
+# Configure one of the supported backends: `postgres`, `bigquery`.
+backend = "postgres"
+
+# Experimental features may be deprecated any time
+[experimental]
+# Configures Postgres storage engine to use OrioleDB (S3)
+orioledb_version = ""
+# Configures S3 bucket URL, eg. <bucket_name>.s3-<region>.amazonaws.com
+s3_host = "env(S3_HOST)"
+# Configures S3 bucket region, eg. us-east-1
+s3_region = "env(S3_REGION)"
+# Configures AWS_ACCESS_KEY_ID for S3 bucket
+s3_access_key = "env(S3_ACCESS_KEY)"
+# Configures AWS_SECRET_ACCESS_KEY for S3 bucket
+s3_secret_key = "env(S3_SECRET_KEY)"
+
+# pg-delta is the schema diff engine for db diff / db pull / db remote commit.
+# Set enabled = false to fall back to the legacy migra engine.
+[experimental.pgdelta]
+enabled = true
+# Directory under `supabase/` where declarative files are written.
+# declarative_schema_path = "./schemas"
+# JSON string passed through to pg-delta SQL formatting. When omitted, SQL is
+# formatted with uppercase keywords, indent 2, max width 180, trailing commas,
+# and column/key alignment. Set to "null" to emit raw, unformatted SQL.
+# format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+[functions.scrape]
+enabled = true
+verify_jwt = false
+import_map = "./functions/scrape/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/scrape/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/scrape/*.html" ]
+</file>
+
+<file path=".gitignore">
+# Beroenden
+node_modules/
+
+# Miljövariabler och hemligheter
+.env
+.env.local
+
+# Loggar
+npm-debug.log*
+*.log
+
+# OS-skräp
+.DS_Store
+Thumbs.db
+</file>
+
+<file path="docs/index.html">
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mina recept</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topp">
+    <h1>Mina recept</h1>
+    <input type="search" id="sok" placeholder="Sök på ingrediens, titel eller ord…" autocomplete="off">
+    <p id="status"></p>
+    <div id="admin"></div>
+  </header>
+
+  <main id="lista"></main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
+</file>
+
+<file path="src/index.js">
+import { writeFile, mkdir } from "node:fs/promises";
+import { extraheraRecept } from "./parse.js";
+import { sparaRecept } from "./save.js";
+
+const url = process.argv[2];
+
+if (!url) {
+  console.error("Användning: node --env-file=.env src/index.js <url>");
+  process.exit(1);
+}
+
+function filnamnFor(url) {
+  const slug = new URL(url).pathname
+    .replace(/^\/|\/$/g, "")
+    .replace(/[^a-z0-9]+/gi, "-");
+  return `data/raw/${slug || "index"}.html`;
+}
+
+async function hamtaSida(url) {
+  const svar = await fetch(url, {
+    headers: { "User-Agent": "Laroprojekt-scraper" },
+  });
+  if (!svar.ok) {
+    throw new Error(`Servern svarade ${svar.status} ${svar.statusText}`);
+  }
+  return await svar.text();
+}
+
+const html = await hamtaSida(url);
+
+await mkdir("data/raw", { recursive: true });
+await writeFile(filnamnFor(url), html, "utf-8");
+
+const recept = extraheraRecept(html, url);
+const sparat = await sparaRecept(recept);
+
+console.log(`✓ ${sparat.title}  (id ${sparat.id})`);
+</file>
+
+<file path="supabase/functions/scrape/index.ts">
+import { createClient } from "jsr:@supabase/supabase-js@2";
+import * as cheerio from "npm:cheerio@1.0.0";
+
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function harTyp(nod: any, typ: string) {
+  const t = nod["@type"];
+  return Array.isArray(t) ? t.includes(typ) : t === typ;
+}
+
+function varaktighetTillMinuter(iso: any) {
+  if (typeof iso !== "string") return null;
+  const m = iso.match(/^PT(?:(\d+)H)?(?:(\d+)M)?$/);
+  if (!m) return null;
+  return Number(m[1] ?? 0) * 60 + Number(m[2] ?? 0);
+}
+
+function valjBild(bild: any) {
+  const lista = Array.isArray(bild) ? bild : [bild];
+  const urler = lista
+    .map((b: any) => (typeof b === "string" ? b : b?.url))
+    .filter(Boolean);
+  return urler.find((u: string) => !/-\d+x\d+\.\w+$/.test(u)) ?? urler[0] ?? null;
+}
+
+function textFranSteg(steg: any): string[] {
+  if (!Array.isArray(steg)) return [];
+  return steg
+    .flatMap((s: any) => {
+      if (typeof s === "string") return s;
+      if (harTyp(s, "HowToSection")) return textFranSteg(s.itemListElement);
+      return s?.text ?? [];
+    })
+    .map((t: string) => t.trim())
+    .filter(Boolean);
+}
+
+function extraheraRecept(html: string, kallUrl: string) {
+  const $ = cheerio.load(html);
+  let r: any = null;
+
+  $('script[type="application/ld+json"]').each((_i, el) => {
+    if (r) return;
+    let data: any;
+    try {
+      data = JSON.parse($(el).text());
+    } catch {
+      return;
+    }
+    const noder = data["@graph"] ?? (Array.isArray(data) ? data : [data]);
+    r = noder.find((n: any) => harTyp(n, "Recipe")) ?? null;
+  });
+
+  if (!r) throw new Error("Ingen receptmärkning hittades på sidan");
+
+  return {
+    source_url: r.url ?? kallUrl,
+    title: r.name?.trim() ?? null,
+    description: r.description?.trim() ?? null,
+    author: r.author?.name ?? null,
+    image_url: valjBild(r.image),
+    ingredients: r.recipeIngredient ?? [],
+    instructions: textFranSteg(r.recipeInstructions),
+    prep_minutes: varaktighetTillMinuter(r.prepTime),
+    cook_minutes: varaktighetTillMinuter(r.cookTime),
+    total_minutes: varaktighetTillMinuter(r.totalTime),
+    servings: r.recipeYield ? String(r.recipeYield) : null,
+    published_at: r.datePublished ?? null,
+    scraped_at: new Date().toISOString(),
+  };
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: cors });
+  }
+
+  try {
+    const { url } = await req.json();
+    if (!url) throw new Error("Ingen url angiven");
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      {
+        global: {
+          headers: { Authorization: req.headers.get("Authorization") ?? "" },
+        },
+      }
+    );
+
+    const svar = await fetch(url, {
+      headers: { "User-Agent": "Laroprojekt-scraper" },
+    });
+    if (!svar.ok) throw new Error(`Sidan svarade ${svar.status}`);
+
+    const recept = extraheraRecept(await svar.text(), url);
+
+    const { data, error } = await supabase
+      .from("recipes")
+      .upsert(recept, { onConflict: "source_url" })
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    return new Response(JSON.stringify(data), {
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ error: (err as Error).message }),
+      { status: 400, headers: { ...cors, "Content-Type": "application/json" } }
+    );
+  }
+});
+</file>
+
+<file path="docs/app.js">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL = "https://jisleyrtpojsfjtlbplp.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_ts0hUrMnRc00kDfzeAZXsg_SZBQeETG";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const lista = document.getElementById("lista");
+const status = document.getElementById("status");
+
+async function hamtaRecept() {
+  const { data, error } = await supabase
+    .from("recipes")
+    .select("*")
+    .order("scraped_at", { ascending: false });
+
+  if (error) {
+    status.textContent = `Fel: ${error.message}`;
+    return [];
+  }
+  return data;
+}
+
+function esc(text) {
+  const d = document.createElement("div");
+  d.textContent = String(text ?? "");
+  return d.innerHTML;
+}
+
+function receptTillHtml(r) {
+  const ingredienser = r.ingredients.map((i) => `<li>${esc(i)}</li>`).join("");
+  const steg = r.instructions.map((s) => `<li>${esc(s)}</li>`).join("");
+
+  const tider = [
+    r.prep_minutes && `Förberedelse ${r.prep_minutes} min`,
+    r.cook_minutes && `Tillagning ${r.cook_minutes} min`,
+    r.servings && `${esc(r.servings)} portioner`,
+  ]
+    .filter(Boolean)
+    .map((t) => `<span>${t}</span>`)
+    .join("");
+
+  const sokText = [r.title, r.description, r.author, ...r.ingredients, ...r.instructions]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return `
+<article class="recept" data-sok="${esc(sokText)}">
+  ${r.image_url ? `<img src="${esc(r.image_url)}" alt="" loading="lazy">` : ""}
+  <div class="innehall">
+        <h2><a class="titel-lank" href="?recept=${r.id}">${esc(r.title)}</a></h2>
+    <p class="ingress">${esc(r.description)}</p>
+    <div class="meta">${tider}</div>
+    <h3>Ingredienser</h3>
+    <ul class="ingredienser">${ingredienser}</ul>
+    <h3>Gör så här</h3>
+    <ol class="steg">${steg}</ol>
+        <button class="dela" data-id="${r.id}" data-titel="${esc(r.title)}">Dela recept</button>
+    <a class="kalla" href="${esc(r.source_url)}">Källa: ${esc(r.author ?? "okänd")}</a>
+  </div>
+</article>`;
+}
+
+const params = new URLSearchParams(location.search);
+const valtId = params.get("recept");
+
+const alla = await hamtaRecept();
+const recept = valtId
+  ? alla.filter((r) => String(r.id) === valtId)
+  : alla;
+
+lista.innerHTML = recept.map(receptTillHtml).join("");
+
+lista.addEventListener("click", async (e) => {
+  const knapp = e.target.closest(".dela");
+  if (!knapp) return;
+
+  const url = new URL(`?recept=${knapp.dataset.id}`, location.href).href;
+  const titel = knapp.dataset.titel;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: titel, url });
+    } catch {
+      // Användaren avbröt delningen — inget att göra.
+    }
+  } else {
+    await navigator.clipboard.writeText(url);
+    knapp.textContent = "Länk kopierad";
+    setTimeout(() => (knapp.textContent = "Dela recept"), 2000);
+  }
+});
+
+if (valtId) {
+  document.querySelector(".topp").insertAdjacentHTML(
+    "afterbegin",
+    `<a class="tillbaka" href="./">← Alla recept</a>`
+  );
+  document.getElementById("sok").hidden = true;
+}
+
+const falt = document.getElementById("sok");
+const kort = [...document.querySelectorAll(".recept")];
+
+falt.addEventListener("input", () => {
+  const ord = falt.value.toLowerCase().split(/\s+/).filter(Boolean);
+  let synliga = 0;
+
+  for (const el of kort) {
+    const traff = ord.every((o) => el.dataset.sok.includes(o));
+    el.hidden = !traff;
+    if (traff) synliga++;
+  }
+
+  status.textContent = ord.length === 0 ? "" : `${synliga} av ${kort.length} recept`;
+});
+
+status.textContent = "";
+
+const admin = document.getElementById("admin");
+
+function visaInloggning() {
+  admin.innerHTML = `
+    <button id="visa-login" class="admin-knapp">Logga in</button>
+    <form id="login" hidden>
+      <input type="email" id="epost" placeholder="E-post" autocomplete="username">
+      <input type="password" id="losen" placeholder="Lösenord" autocomplete="current-password">
+      <button type="submit">Logga in</button>
+      <p id="login-fel"></p>
+    </form>`;
+
+  document.getElementById("visa-login").onclick = (e) => {
+    e.target.hidden = true;
+    document.getElementById("login").hidden = false;
+  };
+
+  document.getElementById("login").onsubmit = async (e) => {
+    e.preventDefault();
+    const { error } = await supabase.auth.signInWithPassword({
+      email: document.getElementById("epost").value,
+      password: document.getElementById("losen").value,
+    });
+    if (error) document.getElementById("login-fel").textContent = error.message;
+    else location.reload();
+  };
+}
+
+function visaSparaFormular() {
+  admin.innerHTML = `
+    <form id="spara">
+      <input type="url" id="ny-url" placeholder="Klistra in en receptlänk…" required>
+      <button type="submit">Spara</button>
+    </form>
+    <p id="spara-status"></p>
+    <button id="logga-ut" class="admin-knapp">Logga ut</button>`;
+
+  const status2 = document.getElementById("spara-status");
+
+  document.getElementById("spara").onsubmit = async (e) => {
+    e.preventDefault();
+    const falt = document.getElementById("ny-url");
+    const knapp = e.target.querySelector("button");
+
+    knapp.disabled = true;
+    status2.textContent = "Hämtar receptet…";
+
+    const { data, error } = await supabase.functions.invoke("scrape", {
+      body: { url: falt.value },
+    });
+
+    knapp.disabled = false;
+
+    if (error) {
+      const detalj = await error.context?.json?.().catch(() => null);
+      status2.textContent = `Misslyckades: ${detalj?.error ?? error.message}`;
+      return;
+    }
+
+    status2.textContent = `Sparade "${data.title}"`;
+    falt.value = "";
+    setTimeout(() => location.reload(), 1200);
+  };
+
+  document.getElementById("logga-ut").onclick = async () => {
+    await supabase.auth.signOut();
+    location.reload();
+  };
+}
+
+const { data: { session } } = await supabase.auth.getSession();
+if (session) visaSparaFormular();
+else visaInloggning();
+</file>
+
+<file path="src/html.js">
+import { supabase } from "./db.js";
+
+export async function hamtaAllaRecept() {
+  const { data, error } = await supabase
+    .from("recipes")
+    .select("*")
+    .order("scraped_at", { ascending: false });
+
+  if (error) throw new Error(`Kunde inte hämta: ${error.message}`);
+  return data;
+}
+
+function esc(text) {
+  return String(text ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export function receptTillHtml(r) {
+  const ingredienser = r.ingredients
+    .map((i) => `<li>${esc(i)}</li>`)
+    .join("\n");
+
+  const steg = r.instructions
+    .map((s) => `<li>${esc(s)}</li>`)
+    .join("\n");
+
+  const tider = [
+    r.prep_minutes && `Förberedelse ${r.prep_minutes} min`,
+    r.cook_minutes && `Tillagning ${r.cook_minutes} min`,
+    r.servings && `${esc(r.servings)} portioner`,
+  ]
+    .filter(Boolean)
+    .map((t) => `<span>${t}</span>`)
+    .join("");
+
+      const sokText = [
+    r.title,
+    r.description,
+    r.author,
+    ...r.ingredients,
+    ...r.instructions,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return `
+<article class="recept" data-sok="${esc(sokText)}">
+  ${r.image_url ? `<img src="${esc(r.image_url)}" alt="">` : ""}
+  <div class="innehall">
+    <h2>${esc(r.title)}</h2>
+    <p class="ingress">${esc(r.description)}</p>
+    <div class="meta">${tider}</div>
+    <h3>Ingredienser</h3>
+    <ul class="ingredienser">${ingredienser}</ul>
+    <h3>Gör så här</h3>
+    <ol class="steg">${steg}</ol>
+    <a class="kalla" href="${esc(r.source_url)}">Källa: ${esc(r.author ?? "okänd")}</a>
+  </div>
+</article>`;
+}
+
+const CSS = `
+  :root {
+    --bg: #faf8f5;
+    --kort: #ffffff;
+    --text: #2b2724;
+    --dampad: #7d7570;
+    --accent: #b0532f;
+    --linje: #e8e2da;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 3rem 1.5rem;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    line-height: 1.65;
+  }
+  .recept {
+    max-width: 640px;
+    margin: 0 auto 4rem;
+    background: var(--kort);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 12px 32px rgba(0,0,0,.05);
+  }
+  .recept img {
+    width: 100%;
+    height: 340px;
+    object-fit: cover;
+    display: block;
+  }
+  .innehall { padding: 2.5rem; }
+  h2 {
+    font-size: 2rem;
+    line-height: 1.2;
+    margin: 0 0 .75rem;
+    font-weight: normal;
+  }
+  .ingress {
+    color: var(--dampad);
+    font-style: italic;
+    margin: 0 0 1.5rem;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--linje);
+    border-bottom: 1px solid var(--linje);
+    font-family: system-ui, sans-serif;
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--dampad);
+  }
+  h3 {
+    font-family: system-ui, sans-serif;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--accent);
+    margin: 2.25rem 0 .9rem;
+  }
+  .ingredienser {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .ingredienser li {
+    padding: .5rem 0 .5rem 1.5rem;
+    border-bottom: 1px solid var(--linje);
+    position: relative;
+  }
+  .ingredienser li::before {
+    content: "";
+    position: absolute;
+    left: .25rem;
+    top: 1.1rem;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .steg {
+    list-style: none;
+    counter-reset: steg;
+    padding: 0;
+    margin: 0;
+  }
+  .steg li {
+    counter-increment: steg;
+    position: relative;
+    padding: 0 0 1.5rem 3rem;
+  }
+  .steg li::before {
+    content: counter(steg);
+    position: absolute;
+    left: 0;
+    top: -.1rem;
+    font-size: 1.6rem;
+    color: var(--accent);
+    opacity: .35;
+  }
+  .kalla {
+    display: inline-block;
+    margin-top: 1.5rem;
+    font-family: system-ui, sans-serif;
+    font-size: .8rem;
+    color: var(--dampad);
+  }
+      .topp {
+    max-width: 640px;
+    margin: 0 auto 3rem;
+    text-align: center;
+  }
+  .topp h1 {
+    font-weight: normal;
+    font-size: 1.4rem;
+    letter-spacing: .02em;
+    margin: 0 0 1.25rem;
+  }
+  #sok {
+    width: 100%;
+    padding: .85rem 1.1rem;
+    border: 1px solid var(--linje);
+    border-radius: 999px;
+    background: var(--kort);
+    font-family: inherit;
+    font-size: 1rem;
+    color: inherit;
+  }
+  #sok:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  #status {
+    font-family: system-ui, sans-serif;
+    font-size: .78rem;
+    color: var(--dampad);
+    margin: .9rem 0 0;
+    min-height: 1.2em;
+  }
+`;
+
+export function byggSida(recept) {
+  const kort = recept.map(receptTillHtml).join("\n");
+  return `<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mina recept</title>
+<style>${CSS}</style>
+</head>
+<body>
+<header class="topp">
+  <h1>Mina recept</h1>
+  <input type="search" id="sok" placeholder="Sök på ingrediens, titel eller ord…" autocomplete="off">
+  <p id="status"></p>
+</header>
+${kort}
+<script>
+  const falt = document.getElementById("sok");
+  const status = document.getElementById("status");
+  const kort = [...document.querySelectorAll(".recept")];
+
+  falt.addEventListener("input", () => {
+    const ord = falt.value.toLowerCase().split(/\\s+/).filter(Boolean);
+    let synliga = 0;
+
+    for (const el of kort) {
+      const text = el.dataset.sok;
+      const traff = ord.every((o) => text.includes(o));
+      el.hidden = !traff;
+      if (traff) synliga++;
+    }
+
+    status.textContent = ord.length === 0
+      ? ""
+      : \`\${synliga} av \${kort.length} recept\`;
+  });
+</script>
+</body>
+</html>`;
+}
+</file>
+
+<file path="package.json">
+{
+  "name": "webscraper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.4",
+    "cheerio": "^1.2.0"
+  }
+}
+</file>
+
+<file path="docs/style.css">
+:root {
+    --bg: #faf8f5;
+    --kort: #ffffff;
+    --text: #2b2724;
+    --dampad: #7d7570;
+    --accent: #b0532f;
+    --linje: #e8e2da;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 3rem 1.5rem;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    line-height: 1.65;
+  }
+  .recept {
+    max-width: 640px;
+    margin: 0 auto 4rem;
+    background: var(--kort);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 12px 32px rgba(0,0,0,.05);
+  }
+  .recept img {
+    width: 100%;
+    height: 340px;
+    object-fit: cover;
+    display: block;
+  }
+  .innehall { padding: 2.5rem; }
+  h2 {
+    font-size: 2rem;
+    line-height: 1.2;
+    margin: 0 0 .75rem;
+    font-weight: normal;
+  }
+  .ingress {
+    color: var(--dampad);
+    font-style: italic;
+    margin: 0 0 1.5rem;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--linje);
+    border-bottom: 1px solid var(--linje);
+    font-family: system-ui, sans-serif;
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--dampad);
+  }
+  h3 {
+    font-family: system-ui, sans-serif;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--accent);
+    margin: 2.25rem 0 .9rem;
+  }
+  .ingredienser {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .ingredienser li {
+    padding: .5rem 0 .5rem 1.5rem;
+    border-bottom: 1px solid var(--linje);
+    position: relative;
+  }
+  .ingredienser li::before {
+    content: "";
+    position: absolute;
+    left: .25rem;
+    top: 1.1rem;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .steg {
+    list-style: none;
+    counter-reset: steg;
+    padding: 0;
+    margin: 0;
+  }
+  .steg li {
+    counter-increment: steg;
+    position: relative;
+    padding: 0 0 1.5rem 3rem;
+  }
+  .steg li::before {
+    content: counter(steg);
+    position: absolute;
+    left: 0;
+    top: -.1rem;
+    font-size: 1.6rem;
+    color: var(--accent);
+    opacity: .35;
+  }
+  .kalla {
+    display: inline-block;
+    margin-top: 1.5rem;
+    font-family: system-ui, sans-serif;
+    font-size: .8rem;
+    color: var(--dampad);
+  }
+      .topp {
+    max-width: 640px;
+    margin: 0 auto 3rem;
+    text-align: center;
+  }
+  .topp h1 {
+    font-weight: normal;
+    font-size: 1.4rem;
+    letter-spacing: .02em;
+    margin: 0 0 1.25rem;
+  }
+  #sok {
+    width: 100%;
+    padding: .85rem 1.1rem;
+    border: 1px solid var(--linje);
+    border-radius: 999px;
+    background: var(--kort);
+    font-family: inherit;
+    font-size: 1rem;
+    color: inherit;
+  }
+  #sok:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  #status {
+    font-family: system-ui, sans-serif;
+    font-size: .78rem;
+    color: var(--dampad);
+    margin: .9rem 0 0;
+    min-height: 1.2em;
+  }
+
+  @media (max-width: 640px) {
+  body {
+    padding: 1.5rem .75rem;
+  }
+  .recept {
+    margin-bottom: 2rem;
+    border-radius: 8px;
+  }
+  .recept img {
+    height: 220px;
+  }
+  .innehall {
+    padding: 1.5rem 1.25rem;
+  }
+  h2 {
+    font-size: 1.5rem;
+  }
+  .meta {
+    gap: .75rem;
+    font-size: .72rem;
+  }
+  .steg li {
+    padding-left: 2.25rem;
+  }
+  .steg li::before {
+    font-size: 1.3rem;
+  }
+}
+
+.topp {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  padding: 1rem 0;
+}
+
+.tillbaka {
+  display: inline-block;
+  margin-bottom: 1.25rem;
+  font-family: system-ui, sans-serif;
+  font-size: .82rem;
+  color: var(--dampad);
+  text-decoration: none;
+}
+.tillbaka:hover {
+  color: var(--accent);
+}
+
+.titel-lank {
+  color: inherit;
+  text-decoration: none;
+}
+.titel-lank:hover {
+  color: var(--accent);
+}
+
+.dela {
+  display: block;
+  margin-top: 1.5rem;
+  padding: .6rem 1.1rem;
+  border: 1px solid var(--linje);
+  border-radius: 999px;
+  background: transparent;
+  font-family: system-ui, sans-serif;
+  font-size: .82rem;
+  color: var(--dampad);
+  cursor: pointer;
+}
+.dela:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+#admin {
+  margin-top: 1rem;
+}
+#admin form {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+#admin input {
+  flex: 1;
+  min-width: 180px;
+  padding: .7rem 1rem;
+  border: 1px solid var(--linje);
+  border-radius: 999px;
+  background: var(--kort);
+  font-family: inherit;
+  font-size: .95rem;
+  color: inherit;
+}
+#admin input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+#admin button {
+  padding: .7rem 1.4rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  font-size: .85rem;
+  cursor: pointer;
+}
+#admin button:disabled {
+  opacity: .5;
+}
+.admin-knapp {
+  background: transparent !important;
+  border: 1px solid var(--linje) !important;
+  color: var(--dampad) !important;
+  font-size: .78rem !important;
+  padding: .45rem 1rem !important;
+}
+#admin [hidden] {
+  display: none !important;
+}
+#spara-status,
+#login-fel {
+  font-family: system-ui, sans-serif;
+  font-size: .8rem;
+  color: var(--dampad);
+  margin: .7rem 0 0;
+}
+</file>
+
+</files>
