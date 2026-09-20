@@ -117,3 +117,77 @@ falt.addEventListener("input", () => {
 });
 
 status.textContent = "";
+
+const admin = document.getElementById("admin");
+
+function visaInloggning() {
+  admin.innerHTML = `
+    <button id="visa-login" class="admin-knapp">Logga in</button>
+    <form id="login" hidden>
+      <input type="email" id="epost" placeholder="E-post" autocomplete="username">
+      <input type="password" id="losen" placeholder="Lösenord" autocomplete="current-password">
+      <button type="submit">Logga in</button>
+      <p id="login-fel"></p>
+    </form>`;
+
+  document.getElementById("visa-login").onclick = (e) => {
+    e.target.hidden = true;
+    document.getElementById("login").hidden = false;
+  };
+
+  document.getElementById("login").onsubmit = async (e) => {
+    e.preventDefault();
+    const { error } = await supabase.auth.signInWithPassword({
+      email: document.getElementById("epost").value,
+      password: document.getElementById("losen").value,
+    });
+    if (error) document.getElementById("login-fel").textContent = error.message;
+    else location.reload();
+  };
+}
+
+function visaSparaFormular() {
+  admin.innerHTML = `
+    <form id="spara">
+      <input type="url" id="ny-url" placeholder="Klistra in en receptlänk…" required>
+      <button type="submit">Spara</button>
+    </form>
+    <p id="spara-status"></p>
+    <button id="logga-ut" class="admin-knapp">Logga ut</button>`;
+
+  const status2 = document.getElementById("spara-status");
+
+  document.getElementById("spara").onsubmit = async (e) => {
+    e.preventDefault();
+    const falt = document.getElementById("ny-url");
+    const knapp = e.target.querySelector("button");
+
+    knapp.disabled = true;
+    status2.textContent = "Hämtar receptet…";
+
+    const { data, error } = await supabase.functions.invoke("scrape", {
+      body: { url: falt.value },
+    });
+
+    knapp.disabled = false;
+
+    if (error) {
+      const detalj = await error.context?.json?.().catch(() => null);
+      status2.textContent = `Misslyckades: ${detalj?.error ?? error.message}`;
+      return;
+    }
+
+    status2.textContent = `Sparade "${data.title}"`;
+    falt.value = "";
+    setTimeout(() => location.reload(), 1200);
+  };
+
+  document.getElementById("logga-ut").onclick = async () => {
+    await supabase.auth.signOut();
+    location.reload();
+  };
+}
+
+const { data: { session } } = await supabase.auth.getSession();
+if (session) visaSparaFormular();
+else visaInloggning();
