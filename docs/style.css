@@ -172,7 +172,7 @@
 }
 
 .topp {
-  position: sticky;
+  position: static;
   top: 0;
   z-index: 10;
   background: var(--bg);
@@ -285,6 +285,8 @@
 
 body.soker .topp {
   min-height: 0;
+  position: sticky;
+  top: 0;
 }
 body.soker .topp h1 {
   font-size: 1.4rem;

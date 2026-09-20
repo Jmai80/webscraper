@@ -114,7 +114,6 @@ if (!valtId) {
 
 falt.addEventListener("input", () => {
   const ord = falt.value.toLowerCase().split(/\s+/).filter(Boolean);
-  document.body.classList.toggle("soker", ord.length > 0);
   let synliga = 0;
 
   for (const el of kort) {
@@ -124,6 +123,15 @@ falt.addEventListener("input", () => {
   }
 
   status.textContent = ord.length === 0 ? "" : `${synliga} av ${kort.length} recept`;
+});
+
+falt.addEventListener("focus", () => {
+  document.body.classList.add("soker");
+  window.scrollTo({ top: 0 });
+});
+
+falt.addEventListener("blur", () => {
+  if (falt.value.trim() === "") document.body.classList.remove("soker");
 });
 
 status.textContent = "";
