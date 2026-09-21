@@ -84,7 +84,7 @@ lista.addEventListener("click", async (e) => {
   const knapp = e.target.closest(".dela");
   if (!knapp) return;
 
-  const url = new URL(`?recept=${knapp.dataset.id}`, location.href).href;
+  const url = new URL(`r/${knapp.dataset.id}.html`, location.href).href;
   const titel = knapp.dataset.titel;
 
   if (navigator.share) {

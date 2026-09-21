@@ -7,6 +7,26 @@ const cors = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+async function startaBygge() {
+  try {
+    const svar = await fetch(
+      "https://api.github.com/repos/jmai80/webscraper/actions/workflows/pages.yml/dispatches",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${Deno.env.get("GITHUB_PAT")}`,
+          Accept: "application/vnd.github+json",
+          "User-Agent": "webscraper",
+        },
+        body: JSON.stringify({ ref: "main" }),
+      }
+    );
+    if (!svar.ok) console.error(`GitHub svarade ${svar.status}: ${await svar.text()}`);
+  } catch (err) {
+    console.error("Kunde inte starta bygget:", err);
+  }
+}
+
 function harTyp(nod: any, typ: string) {
   const t = nod["@type"];
   return Array.isArray(t) ? t.includes(typ) : t === typ;
@@ -107,6 +127,8 @@ Deno.serve(async (req) => {
       .single();
 
     if (error) throw new Error(error.message);
+
+    await startaBygge();
 
     return new Response(JSON.stringify(data), {
       headers: { ...cors, "Content-Type": "application/json" },
