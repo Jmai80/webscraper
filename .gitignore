@@ -12,3 +12,6 @@ npm-debug.log*
 # OS-skräp
 .DS_Store
 Thumbs.db
+
+# Genereras av bygget
+docs/r/
