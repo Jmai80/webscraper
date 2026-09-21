@@ -11,12 +11,26 @@ const status = document.getElementById("status");
 async function hamtaRecept() {
   const { data, error } = await supabase
     .from("recipes")
-    .select("*")
+    .select("id, title, image_url, ingredients, tags")
     .order("scraped_at", { ascending: false });
 
   if (error) {
     status.textContent = `Fel: ${error.message}`;
     return [];
+  }
+  return data;
+}
+
+async function hamtaEttRecept(id) {
+  const { data, error } = await supabase
+    .from("recipes")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    status.textContent = `Fel: ${error.message}`;
+    return null;
   }
   return data;
 }
@@ -40,13 +54,9 @@ function receptTillHtml(r) {
     .map((t) => `<span>${t}</span>`)
     .join("");
 
-  const sokText = [r.title, r.description, r.author, ...r.ingredients, ...r.instructions]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
 
   return `
-<article class="recept" data-sok="${esc(sokText)}">
+<article class="recept">
   ${r.image_url ? `<img src="${esc(r.image_url)}" alt="" loading="lazy">` : ""}
   <div class="innehall">
         <h2><a class="titel-lank" href="?recept=${r.id}">${esc(r.title)}</a></h2>
@@ -62,15 +72,39 @@ function receptTillHtml(r) {
 </article>`;
 }
 
+function traffTillHtml(r) {
+  const sokText = [r.title, ...r.ingredients, ...r.tags]
+    .join(" ")
+    .toLowerCase();
+
+  const bild = r.image_url
+    ? `<img src="${esc(r.image_url)}" alt="" loading="lazy">`
+    : `<span class="traff-tom"></span>`;
+
+  return `
+<a class="traff" href="?recept=${r.id}" data-sok="${esc(sokText)}">
+  ${bild}
+  <span class="traff-titel">${esc(r.title)}</span>
+</a>`;
+}
+
 const params = new URLSearchParams(location.search);
 const valtId = params.get("recept");
 
-const alla = await hamtaRecept();
-const recept = valtId
-  ? alla.filter((r) => String(r.id) === valtId)
-  : alla;
+let alla = [];
+let recept = [];
 
-lista.innerHTML = recept.map(receptTillHtml).join("");
+if (valtId) {
+  const ett = await hamtaEttRecept(valtId);
+  if (ett) recept = [ett];
+} else {
+  alla = await hamtaRecept();
+  recept = alla;
+}
+
+lista.innerHTML = valtId
+  ? recept.map(receptTillHtml).join("")
+  : alla.map(traffTillHtml).join("");
 
 const grid = document.getElementById("grid");
 grid.innerHTML = alla
@@ -110,11 +144,7 @@ if (valtId) {
 }
 
 const falt = document.getElementById("sok");
-const kort = [...document.querySelectorAll(".recept")];
-
-if (!valtId) {
-  for (const el of kort) el.hidden = true;
-}
+const kort = [...document.querySelectorAll(".traff")];
 
 if (!valtId) {
   for (const el of kort) el.hidden = true;
