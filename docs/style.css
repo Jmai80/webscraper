@@ -12,7 +12,7 @@
 * { box-sizing: border-box; }
 html { height: 100%; }
 
-/* Sidan är låst till skärmhöjden. Bara #grid, #lista och .sida scrollar. */
+/* Sidan är låst till skärmhöjden. Bara #lista och .sida scrollar. */
 body {
   margin: 0;
   padding: 0 1.5rem;
@@ -90,7 +90,6 @@ body.receptvy .topp h1,
 body.receptvy #admin { display: none; }
 
 /* ===== Ytorna som scrollar ===== */
-#grid,
 #lista,
 .sida {
   flex: 1;
@@ -100,23 +99,23 @@ body.receptvy #admin { display: none; }
 }
 #lista { padding-top: .5rem; }
 
-/* ===== Miniatyrgrid på startskärmen ===== */
+/* ===== Bildmosaik på startskärmen ===== */
+/* Fast rutnät som fyller ytan exakt: 5 × 3 på dator, 3 × 4 på telefon.
+   Ingen scroll, inga mellanrum mellan bilderna. */
 #grid {
+  flex: 1;
+  min-height: 0;
   width: 100%;
   max-width: 640px;
-  margin: 0 auto;
-  padding-bottom: 1rem;
+  margin: 0 auto 1rem;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: .5rem;
-}
-#grid a {
-  display: block;
-  aspect-ratio: 1;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
   border-radius: 4px;
   overflow: hidden;
   background: var(--linje);
 }
+#grid a { display: block; }
 #grid img {
   display: block;
   width: 100%;
@@ -433,6 +432,11 @@ textarea:focus {
 /* ===== Mobil ===== */
 @media (max-width: 640px) {
   body { padding: 0 .75rem; }
+  #grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+  }
+  #grid a:nth-child(n+13) { display: none; }
   .recept {
     margin-bottom: 2rem;
     border-radius: 8px;

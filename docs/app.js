@@ -110,11 +110,20 @@ lista.innerHTML = valtId
   ? recept.map(receptTillHtml).join("")
   : alla.map(traffTillHtml).join("");
 
+// Blandar en lista i slumpvis ordning.
+function blanda(saker) {
+  for (let i = saker.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [saker[i], saker[j]] = [saker[j], saker[i]];
+  }
+  return saker;
+}
+
 const grid = document.getElementById("grid");
-grid.innerHTML = alla
-  .filter((r) => r.image_url)
+const urval = blanda(alla.filter((r) => r.image_url)).slice(0, 15);
+grid.innerHTML = urval
   .map(
-    (r) => `<a href="?recept=${r.id}"><img src="${esc(r.image_url)}" alt="${esc(r.title)}" loading="lazy"></a>`
+    (r) => `<a href="?recept=${r.id}"><img src="${esc(r.image_url)}" alt="${esc(r.title)}"></a>`
   )
   .join("");
 
