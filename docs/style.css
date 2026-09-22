@@ -475,3 +475,20 @@ a.admin-knapp {
   line-height: normal;
   text-decoration: none;
 }
+
+.nyckelord {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+.nyckelord li {
+  padding: .2rem .7rem;
+  border: 1px solid var(--linje);
+  border-radius: 999px;
+  font-family: system-ui, sans-serif;
+  font-size: .75rem;
+  color: var(--dampad);
+}

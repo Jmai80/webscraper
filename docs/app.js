@@ -54,19 +54,23 @@ function receptTillHtml(r) {
     .map((t) => `<span>${t}</span>`)
     .join("");
 
+  const nyckelord = r.tags.length > 0
+    ? `<ul class="nyckelord">${r.tags.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`
+    : "";
 
   return `
 <article class="recept">
   ${r.image_url ? `<img src="${esc(r.image_url)}" alt="" loading="lazy">` : ""}
   <div class="innehall">
-        <h2><a class="titel-lank" href="?recept=${r.id}">${esc(r.title)}</a></h2>
+    <h2><a class="titel-lank" href="?recept=${r.id}">${esc(r.title)}</a></h2>
     <p class="ingress">${esc(r.description)}</p>
     <div class="meta">${tider}</div>
+    ${nyckelord}
     <h3>Ingredienser</h3>
     <ul class="ingredienser">${ingredienser}</ul>
     <h3>Gör så här</h3>
     <ol class="steg">${steg}</ol>
-        <button class="dela" data-id="${r.id}" data-titel="${esc(r.title)}">Dela recept</button>
+    <button class="dela" data-id="${r.id}" data-titel="${esc(r.title)}">Dela recept</button>
     <a class="kalla" href="${esc(r.source_url)}">Källa: ${esc(r.author ?? "okänd")}</a>
   </div>
 </article>`;
