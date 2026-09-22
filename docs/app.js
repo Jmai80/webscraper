@@ -209,7 +209,10 @@ function visaSparaFormular() {
       <button type="submit">Spara</button>
     </form>
     <p id="spara-status"></p>
-    <button id="logga-ut" class="admin-knapp">Logga ut</button>`;
+        <div class="admin-rad">
+      <a href="nytt.html" class="admin-knapp">Nytt recept</a>
+      <button id="logga-ut" class="admin-knapp">Logga ut</button>
+    </div>`;
 
   const status2 = document.getElementById("spara-status");
 

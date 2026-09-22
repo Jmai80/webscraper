@@ -461,3 +461,17 @@ body.soker #grid {
   color: var(--dampad);
   padding-bottom: 2rem;
 }
+
+/* Länk och utloggning på samma rad */
+.admin-rad {
+  display: flex;
+  justify-content: center;
+  gap: .5rem;
+}
+a.admin-knapp {
+  display: inline-block;
+  border-radius: 999px;
+  font-family: system-ui, sans-serif;
+  line-height: normal;
+  text-decoration: none;
+}
