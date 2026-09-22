@@ -1,343 +1,107 @@
+/* ===== Färger ===== */
 :root {
-    --bg: #faf8f5;
-    --kort: #ffffff;
-    --text: #2b2724;
-    --dampad: #7d7570;
-    --accent: #b0532f;
-    --linje: #e8e2da;
-  }
-  * { box-sizing: border-box; }
-  html { height: 100%; }
-  body {
-    margin: 0;
-    padding: 0 1.5rem;
-    height: 100dvh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg);
-    color: var(--text);
-    font-family: Georgia, "Times New Roman", serif;
-    line-height: 1.65;
-  }
-  .recept {
-    max-width: 640px;
-    margin: 0 auto 4rem;
-    background: var(--kort);
-    border-radius: 4px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 12px 32px rgba(0,0,0,.05);
-  }
-  .recept img {
-    width: 100%;
-    height: 340px;
-    object-fit: cover;
-    display: block;
-  }
-  .innehall { padding: 2.5rem; }
-  h2 {
-    font-size: 2rem;
-    line-height: 1.2;
-    margin: 0 0 .75rem;
-    font-weight: normal;
-  }
-  .ingress {
-    color: var(--dampad);
-    font-style: italic;
-    margin: 0 0 1.5rem;
-  }
-  .meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.25rem;
-    padding: 1rem 0;
-    border-top: 1px solid var(--linje);
-    border-bottom: 1px solid var(--linje);
-    font-family: system-ui, sans-serif;
-    font-size: .8rem;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    color: var(--dampad);
-  }
-  h3 {
-    font-family: system-ui, sans-serif;
-    font-size: .78rem;
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    color: var(--accent);
-    margin: 2.25rem 0 .9rem;
-  }
-  .ingredienser {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  .ingredienser li {
-    padding: .5rem 0 .5rem 1.5rem;
-    border-bottom: 1px solid var(--linje);
-    position: relative;
-  }
-  .ingredienser li::before {
-    content: "";
-    position: absolute;
-    left: .25rem;
-    top: 1.1rem;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--accent);
-  }
-  .steg {
-    list-style: none;
-    counter-reset: steg;
-    padding: 0;
-    margin: 0;
-  }
-  .steg li {
-    counter-increment: steg;
-    position: relative;
-    padding: 0 0 1.5rem 3rem;
-  }
-  .steg li::before {
-    content: counter(steg);
-    position: absolute;
-    left: 0;
-    top: -.1rem;
-    font-size: 1.6rem;
-    color: var(--accent);
-    opacity: .35;
-  }
-  .kalla {
-    display: inline-block;
-    margin-top: 1.5rem;
-    font-family: system-ui, sans-serif;
-    font-size: .8rem;
-    color: var(--dampad);
-  }
-      .topp {
-    max-width: 640px;
-    margin: 0 auto 3rem;
-    text-align: center;
-  }
-  .topp h1 {
-    font-weight: normal;
-    font-size: 1.4rem;
-    letter-spacing: .02em;
-    margin: 0 0 1.25rem;
-  }
-  #sok {
-    width: 100%;
-    padding: .85rem 1.1rem;
-    border: 1px solid var(--linje);
-    border-radius: 999px;
-    background: var(--kort);
-    font-family: inherit;
-    font-size: 1rem;
-    color: inherit;
-  }
-  #sok:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
-  #status {
-    font-family: system-ui, sans-serif;
-    font-size: .78rem;
-    color: var(--dampad);
-    margin: .9rem 0 0;
-    min-height: 1.2em;
-  }
-
-  @media (max-width: 640px) {
-  body {
-    padding: 0 .75rem;
-  }
-  .recept {
-    margin-bottom: 2rem;
-    border-radius: 8px;
-  }
-  .recept img {
-    height: 220px;
-  }
-  .innehall {
-    padding: 1.5rem 1.25rem;
-  }
-  h2 {
-    font-size: 1.5rem;
-  }
-  .meta {
-    gap: .75rem;
-    font-size: .72rem;
-  }
-  .steg li {
-    padding-left: 2.25rem;
-  }
-  .steg li::before {
-    font-size: 1.3rem;
-  }
+  --bg: #faf8f5;
+  --kort: #ffffff;
+  --text: #2b2724;
+  --dampad: #7d7570;
+  --accent: #b0532f;
+  --linje: #e8e2da;
 }
 
-.topp {
-  position: static;
-  top: 0;
-  z-index: 10;
+/* ===== Grund ===== */
+* { box-sizing: border-box; }
+html { height: 100%; }
+
+/* Sidan är låst till skärmhöjden. Bara #grid, #lista och .sida scrollar. */
+body {
+  margin: 0;
+  padding: 0 1.5rem;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   background: var(--bg);
-  padding: 1rem 0;
+  color: var(--text);
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.65;
 }
 
+/* Det som har hidden ska alltid vara dolt, även om det har display: flex */
+[hidden] { display: none !important; }
+
+/* ===== Toppen ===== */
+.topp {
+  flex: 0 0 auto;
+  max-width: 640px;
+  margin: 0 auto 3rem;
+  padding: 2.5rem 0 1rem;
+  text-align: center;
+  background: var(--bg);
+}
+.topp h1 {
+  margin: 0 0 1.25rem;
+  font-weight: normal;
+  font-size: clamp(2.5rem, 12vw, 4rem);
+  letter-spacing: .02em;
+  transition: font-size .35s ease;
+}
 .tillbaka {
   display: inline-block;
   margin-bottom: 1.25rem;
   font-family: system-ui, sans-serif;
-  font-size: .82rem;
+  font-size: 1rem;
   color: var(--dampad);
   text-decoration: none;
 }
-.tillbaka:hover {
-  color: var(--accent);
-}
+.tillbaka:hover { color: var(--accent); }
 
-.titel-lank {
-  color: inherit;
-  text-decoration: none;
-}
-.titel-lank:hover {
-  color: var(--accent);
-}
-
-.dela {
-  display: block;
-  margin-top: 1.5rem;
-  padding: .6rem 1.1rem;
-  border: 1px solid var(--linje);
-  border-radius: 999px;
-  background: transparent;
+#status {
+  margin: .9rem 0 0;
+  min-height: 1.2em;
   font-family: system-ui, sans-serif;
-  font-size: .82rem;
+  font-size: .78rem;
   color: var(--dampad);
-  cursor: pointer;
-}
-.dela:hover {
-  border-color: var(--accent);
-  color: var(--accent);
 }
 
-#admin {
-  margin-top: 1rem;
-}
-#admin form {
-  display: flex;
-  gap: .5rem;
-  flex-wrap: wrap;
-}
-#admin input {
-  flex: 1;
-  min-width: 180px;
-  padding: .7rem 1rem;
-  border: 1px solid var(--linje);
-  border-radius: 999px;
-  background: var(--kort);
-  font-family: inherit;
-  font-size: .95rem;
-  color: inherit;
-}
-#admin input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-#admin button {
-  padding: .7rem 1.4rem;
-  border: none;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  font-family: system-ui, sans-serif;
-  font-size: .85rem;
-  cursor: pointer;
-}
-#admin button:disabled {
-  opacity: .5;
-}
-.admin-knapp {
-  background: transparent !important;
-  border: 1px solid var(--linje) !important;
-  color: var(--dampad) !important;
-  font-size: .78rem !important;
-  padding: .45rem 1rem !important;
-}
-#admin [hidden] {
-  display: none !important;
-}
-#spara-status,
-#login-fel {
-  font-family: system-ui, sans-serif;
-  font-size: .8rem;
-  color: var(--dampad);
-  margin: .7rem 0 0;
-}
-
-/* Startvy — fyller fönstret tills man söker */
-.topp {
-  flex: 0 0 auto;
-  padding-top: 2.5rem;
-}
-
-.topp h1 {
-  font-size: clamp(2.5rem, 12vw, 4rem);
-  transition: font-size .35s ease;
-}
-
-body.soker .topp {
-  flex: 0 0 auto;
-}
-body.soker .topp h1 {
-  font-size: 1.4rem;
-}
-
-/* Listan är den enda ytan som scrollar */
-#lista {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-top: .5rem;
-}
-
-/* Tightare mellanrum när toppen är hopkrympt */
+/* ===== Sökläge: toppen krymper, gridet döljs ===== */
 body.soker .topp {
   margin-bottom: 1rem;
   padding: .75rem 0;
 }
 body.soker .topp h1 {
   margin-bottom: .75rem;
+  font-size: 1.4rem;
 }
-body.soker .tillbaka {
-  margin-bottom: .5rem;
-}
+body.soker .tillbaka { margin-bottom: .5rem; }
 body.soker #status {
   margin-top: .5rem;
   min-height: 0;
 }
-body.soker #admin {
-  margin-top: .6rem;
-}
-body.soker #lista {
-  padding-top: 0;
-}
+body.soker #admin { margin-top: .6rem; }
+body.soker #lista { padding-top: 0; }
+body.soker #grid { display: none; }
 
-/* Inget admin-fält i enskild receptvy */
-body.receptvy #admin {
-  display: none;
-}
-body.receptvy .topp h1 {
-  display: none;
-}
+/* Sidor med tillbaka-länk: mer luft upptill, så att länken
+   inte hamnar i iPhonens tonade kant längst upp */
+body.soker .topp:has(.tillbaka) { padding-top: 2.5rem; }
 
-/* Miniatyrgrid på startskärmen */
-#grid {
+/* Enskilt recept: ingen rubrik, ingen admin */
+body.receptvy .topp h1,
+body.receptvy #admin { display: none; }
+
+/* ===== Ytorna som scrollar ===== */
+#grid,
+#lista,
+.sida {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+#lista { padding-top: .5rem; }
+
+/* ===== Miniatyrgrid på startskärmen ===== */
+#grid {
   width: 100%;
   max-width: 640px;
   margin: 0 auto;
@@ -354,16 +118,13 @@ body.receptvy .topp h1 {
   background: var(--linje);
 }
 #grid img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
-}
-body.soker #grid {
-  display: none;
 }
 
-/* Sökträffar */
+/* ===== Sökträffar ===== */
 .traff {
   display: flex;
   align-items: center;
@@ -379,9 +140,9 @@ body.soker #grid {
 }
 .traff img,
 .traff-tom {
+  flex-shrink: 0;
   width: 64px;
   height: 64px;
-  flex-shrink: 0;
   border-radius: 4px;
   object-fit: cover;
   background: var(--linje);
@@ -390,92 +151,109 @@ body.soker #grid {
   font-size: 1.05rem;
   line-height: 1.3;
 }
-.traff[hidden] {
-  display: none;
-}
 
-/* Formulärsidan */
-.sida {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-.sida form,
-#nytt-status {
+/* ===== Receptet ===== */
+.recept {
   max-width: 640px;
-  margin: 0 auto;
+  margin: 0 auto 4rem;
+  background: var(--kort);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 12px 32px rgba(0,0,0,.05);
 }
-.sida form {
-  padding-bottom: 1rem;
-}
-.sida label {
-  display: block;
-  margin-bottom: 1.25rem;
-  font-family: system-ui, sans-serif;
-  font-size: .75rem;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: var(--dampad);
-}
-.sida input,
-.sida textarea {
+.recept img {
   display: block;
   width: 100%;
-  margin-top: .4rem;
-  padding: .7rem 1rem;
-  border: 1px solid var(--linje);
-  border-radius: 6px;
-  background: var(--kort);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1rem;
-  line-height: 1.5;
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--text);
+  height: 340px;
+  object-fit: cover;
 }
-.sida textarea {
-  resize: vertical;
+.innehall { padding: 2.5rem; }
+
+h2 {
+  margin: 0 0 .75rem;
+  font-size: 2rem;
+  font-weight: normal;
+  line-height: 1.2;
 }
-.sida input:focus,
-.sida textarea:focus {
-  outline: none;
-  border-color: var(--accent);
+.titel-lank {
+  color: inherit;
+  text-decoration: none;
 }
-.sida button {
-  padding: .7rem 1.4rem;
-  border: none;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
+.titel-lank:hover { color: var(--accent); }
+
+.ingress {
+  margin: 0 0 1.5rem;
+  font-style: italic;
+  color: var(--dampad);
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--linje);
+  border-bottom: 1px solid var(--linje);
   font-family: system-ui, sans-serif;
-  font-size: .85rem;
-  cursor: pointer;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--dampad);
 }
-.sida button:disabled {
-  opacity: .5;
+h3 {
+  margin: 2.25rem 0 .9rem;
+  font-family: system-ui, sans-serif;
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--accent);
 }
-#nytt-status {
+
+.ingredienser,
+.steg {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.ingredienser li {
+  position: relative;
+  padding: .5rem 0 .5rem 1.5rem;
+  border-bottom: 1px solid var(--linje);
+}
+.ingredienser li::before {
+  content: "";
+  position: absolute;
+  left: .25rem;
+  top: 1.1rem;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.steg { counter-reset: steg; }
+.steg li {
+  counter-increment: steg;
+  position: relative;
+  padding: 0 0 1.5rem 3rem;
+}
+.steg li::before {
+  content: counter(steg);
+  position: absolute;
+  left: 0;
+  top: -.1rem;
+  font-size: 1.6rem;
+  color: var(--accent);
+  opacity: .35;
+}
+
+.kalla {
+  display: inline-block;
+  margin-top: 1.5rem;
   font-family: system-ui, sans-serif;
   font-size: .8rem;
   color: var(--dampad);
-  padding-bottom: 2rem;
 }
 
-/* Länk och utloggning på samma rad */
-.admin-rad {
-  display: flex;
-  justify-content: center;
-  gap: .5rem;
-}
-a.admin-knapp {
-  display: inline-block;
-  border-radius: 999px;
-  font-family: system-ui, sans-serif;
-  line-height: normal;
-  text-decoration: none;
-}
-
+/* ===== Nyckelord ===== */
 .nyckelord {
   list-style: none;
   padding: 0;
@@ -492,57 +270,180 @@ a.admin-knapp {
   font-size: .75rem;
   color: var(--dampad);
 }
-
-.redigera-nyckelord {
-  margin-top: .75rem;
-  padding: .3rem .8rem;
-  border: 1px dashed var(--linje);
-  border-radius: 999px;
-  background: transparent;
-  font-family: system-ui, sans-serif;
-  font-size: .75rem;
-  color: var(--dampad);
-  cursor: pointer;
-}
 .nyckelord-form {
   margin-top: 1rem;
   display: flex;
   flex-direction: column;
   gap: .5rem;
 }
-.nyckelord-form[hidden],
-.nyckelord[hidden] {
-  display: none;
+.nyckelord-knappar {
+  display: flex;
+  gap: .5rem;
 }
-.nyckelord-form input {
-  padding: .6rem .9rem;
+
+/* ===== Textfält (gemensamt) ===== */
+/* font-size 1rem överallt: mindre än så får iPhone att zooma in */
+input,
+textarea {
   border: 1px solid var(--linje);
-  border-radius: 999px;
   background: var(--kort);
   font-family: inherit;
   font-size: 1rem;
   color: inherit;
 }
-.nyckelord-form input:focus {
+input:focus,
+textarea:focus {
   outline: none;
   border-color: var(--accent);
 }
-.nyckelord-knappar {
-  display: flex;
-  gap: .5rem;
+#sok {
+  width: 100%;
+  padding: .85rem 1.1rem;
+  border-radius: 999px;
 }
-.nyckelord-knappar button {
-  padding: .45rem 1.1rem;
+#admin input {
+  flex: 1;
+  min-width: 180px;
+  padding: .7rem 1rem;
+  border-radius: 999px;
+}
+.nyckelord-form input {
+  padding: .6rem .9rem;
+  border-radius: 999px;
+}
+
+/* ===== Knappar ===== */
+/* Fyllda knappar */
+#admin button,
+.sida button {
+  padding: .7rem 1.4rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  font-family: system-ui, sans-serif;
+  font-size: .85rem;
+  color: #fff;
+  cursor: pointer;
+}
+#admin button:disabled,
+.sida button:disabled { opacity: .5; }
+
+/* Diskreta knappar med kantlinje */
+.dela,
+.redigera-nyckelord,
+.nyckelord-knappar button,
+#admin .admin-knapp {
   border: 1px solid var(--linje);
   border-radius: 999px;
   background: transparent;
   font-family: system-ui, sans-serif;
-  font-size: .8rem;
   color: var(--dampad);
   cursor: pointer;
+}
+.dela {
+  display: block;
+  margin-top: 1.5rem;
+  padding: .6rem 1.1rem;
+  font-size: .82rem;
+}
+.dela:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.redigera-nyckelord {
+  margin-top: .75rem;
+  padding: .3rem .8rem;
+  border-style: dashed;
+  font-size: .75rem;
+}
+.nyckelord-knappar button {
+  padding: .45rem 1.1rem;
+  font-size: .8rem;
 }
 .nyckelord-knappar button[type="submit"] {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+}
+#admin .admin-knapp {
+  display: inline-block;
+  padding: .45rem 1rem;
+  font-size: .78rem;
+  line-height: normal;
+  text-decoration: none;
+}
+
+/* ===== Admin (startsidan) ===== */
+#admin { margin-top: 1rem; }
+#admin form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.admin-rad {
+  display: flex;
+  justify-content: center;
+  gap: .5rem;
+}
+#spara-status,
+#login-fel {
+  margin: .7rem 0 0;
+  font-family: system-ui, sans-serif;
+  font-size: .8rem;
+  color: var(--dampad);
+}
+
+/* ===== Formulärsidan (nytt.html) ===== */
+.sida form,
+#nytt-status {
+  max-width: 640px;
+  margin: 0 auto;
+}
+.sida form { padding-bottom: 1rem; }
+.sida label {
+  display: block;
+  margin-bottom: 1.25rem;
+  font-family: system-ui, sans-serif;
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--dampad);
+}
+.sida input,
+.sida textarea {
+  display: block;
+  width: 100%;
+  margin-top: .4rem;
+  padding: .7rem 1rem;
+  border-radius: 6px;
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.5;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text);
+}
+.sida textarea { resize: vertical; }
+#nytt-status {
+  padding-bottom: 2rem;
+  font-family: system-ui, sans-serif;
+  font-size: .8rem;
+  color: var(--dampad);
+}
+
+/* ===== Mobil ===== */
+@media (max-width: 640px) {
+  body { padding: 0 .75rem; }
+  .recept {
+    margin-bottom: 2rem;
+    border-radius: 8px;
+  }
+  .recept img { height: 220px; }
+  .innehall { padding: 1.5rem 1.25rem; }
+  h2 { font-size: 1.5rem; }
+  .meta {
+    gap: .75rem;
+    font-size: .72rem;
+  }
+  .steg li { padding-left: 2.25rem; }
+  .steg li::before { font-size: 1.3rem; }
 }
