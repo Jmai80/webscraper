@@ -49,16 +49,15 @@ form.onsubmit = async (e) => {
     scraped_at: new Date().toISOString(),
   };
 
-  const { data, error } = await supabase
-    .from("recipes")
-    .insert(recept)
-    .select("id")
-    .single();
+  const { data, error } = await supabase.functions.invoke("scrape", {
+    body: { recept },
+  });
 
   knapp.disabled = false;
 
   if (error) {
-    status.textContent = `Misslyckades: ${error.message}`;
+    const detalj = await error.context?.json?.().catch(() => null);
+    status.textContent = `Misslyckades: ${detalj?.error ?? error.message}`;
     return;
   }
 

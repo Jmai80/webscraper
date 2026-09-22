@@ -100,8 +100,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { url } = await req.json();
-    if (!url) throw new Error("Ingen url angiven");
+    const body = await req.json();
+    if (!body.url && !body.recept) throw new Error("Ingen url eller recept angivet");
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -113,12 +113,16 @@ Deno.serve(async (req) => {
       }
     );
 
-    const svar = await fetch(url, {
-      headers: { "User-Agent": "Laroprojekt-scraper" },
-    });
-    if (!svar.ok) throw new Error(`Sidan svarade ${svar.status}`);
-
-    const recept = extraheraRecept(await svar.text(), url);
+    let recept;
+    if (body.recept) {
+      recept = body.recept;
+    } else {
+      const svar = await fetch(body.url, {
+        headers: { "User-Agent": "Laroprojekt-scraper" },
+      });
+      if (!svar.ok) throw new Error(`Sidan svarade ${svar.status}`);
+      recept = extraheraRecept(await svar.text(), body.url);
+    }
 
     const { data, error } = await supabase
       .from("recipes")
