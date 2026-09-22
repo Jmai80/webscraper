@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nytt recept</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="soker">
+  <header class="topp">
+    <a class="tillbaka" href="./">← Alla recept</a>
+  </header>
+
+  <main class="sida">
+    <form id="nytt">
+      <h2>Nytt recept</h2>
+
+      <label>Titel
+        <input type="text" id="titel" required>
+      </label>
+
+      <label>Beskrivning
+        <textarea id="beskrivning" rows="3"></textarea>
+      </label>
+
+      <label>Ingredienser — en per rad
+        <textarea id="ingredienser" rows="10" required></textarea>
+      </label>
+
+      <label>Gör så här — ett steg per rad
+        <textarea id="steg" rows="10" required></textarea>
+      </label>
+
+      <label>Bildadress
+        <input type="url" id="bild">
+      </label>
+
+      <label>Källa
+        <input type="url" id="kalla">
+      </label>
+
+      <label>Författare
+        <input type="text" id="forfattare">
+      </label>
+
+      <label>Nyckelord — åtskilda med kommatecken
+        <input type="text" id="nyckelord">
+      </label>
+
+      <button type="submit">Spara recept</button>
+    </form>
+
+    <p id="nytt-status"></p>
+  </main>
+
+  <script type="module" src="nytt.js"></script>
+</body>
+</html>

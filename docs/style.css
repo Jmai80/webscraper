@@ -393,3 +393,71 @@ body.soker #grid {
 .traff[hidden] {
   display: none;
 }
+
+/* Formulärsidan */
+.sida {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.sida form,
+#nytt-status {
+  max-width: 640px;
+  margin: 0 auto;
+}
+.sida form {
+  padding-bottom: 1rem;
+}
+.sida label {
+  display: block;
+  margin-bottom: 1.25rem;
+  font-family: system-ui, sans-serif;
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--dampad);
+}
+.sida input,
+.sida textarea {
+  display: block;
+  width: 100%;
+  margin-top: .4rem;
+  padding: .7rem 1rem;
+  border: 1px solid var(--linje);
+  border-radius: 6px;
+  background: var(--kort);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text);
+}
+.sida textarea {
+  resize: vertical;
+}
+.sida input:focus,
+.sida textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.sida button {
+  padding: .7rem 1.4rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  font-size: .85rem;
+  cursor: pointer;
+}
+.sida button:disabled {
+  opacity: .5;
+}
+#nytt-status {
+  font-family: system-ui, sans-serif;
+  font-size: .8rem;
+  color: var(--dampad);
+  padding-bottom: 2rem;
+}
