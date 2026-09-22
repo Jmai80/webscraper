@@ -289,9 +289,32 @@ function visaNyckelordRedigering(r) {
     if (etiketter) etiketter.hidden = false;
   };
 
-  form.onsubmit = (e) => {
+  form.onsubmit = async (e) => {
     e.preventDefault();
-    // Sparandet kommer i nästa steg.
+    const sparaKnapp = form.querySelector('button[type="submit"]');
+    sparaKnapp.disabled = true;
+    sparaKnapp.textContent = "Sparar…";
+
+    const nya = inmatning.value
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+
+    const { data, error } = await supabase
+      .from("recipes")
+      .update({ tags: nya })
+      .eq("id", r.id)
+      .select("tags")
+      .maybeSingle();
+
+    if (error || !data) {
+      sparaKnapp.disabled = false;
+      sparaKnapp.textContent = "Spara";
+      alert(`Kunde inte spara: ${error?.message ?? "ingen rad ändrades"}`);
+      return;
+    }
+
+    location.reload();
   };
 }
 
