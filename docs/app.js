@@ -264,69 +264,17 @@ const { data: { session } } = await supabase.auth.getSession();
 if (session) visaSparaFormular();
 else visaInloggning();
 
-function visaNyckelordRedigering(r) {
-  const etiketter = document.querySelector(".recept .nyckelord");
-  const plats = etiketter ?? document.querySelector(".recept .meta");
+function visaRedigeraLank(r) {
+  const plats = document.querySelector(".recept .nyckelord")
+    ?? document.querySelector(".recept .meta")
+    ?? document.querySelector(".recept .ingress");
 
   plats.insertAdjacentHTML(
     "afterend",
-    `<button class="redigera-nyckelord">Redigera nyckelord</button>
-    <form class="nyckelord-form" hidden>
-      <input type="text" id="nyckelord-falt" placeholder="t.ex. vegetariskt, snabbt" autocomplete="off">
-      <div class="nyckelord-knappar">
-        <button type="submit">Spara</button>
-        <button type="button" class="avbryt">Avbryt</button>
-      </div>
-    </form>`
+    `<a class="redigera" href="nytt.html?recept=${r.id}">Redigera recept</a>`
   );
-
-  const knapp = document.querySelector(".redigera-nyckelord");
-  const form = document.querySelector(".nyckelord-form");
-  const inmatning = document.getElementById("nyckelord-falt");
-
-  knapp.onclick = () => {
-    inmatning.value = r.tags.join(", ");
-    knapp.hidden = true;
-    if (etiketter) etiketter.hidden = true;
-    form.hidden = false;
-    inmatning.focus();
-  };
-
-  form.querySelector(".avbryt").onclick = () => {
-    form.hidden = true;
-    knapp.hidden = false;
-    if (etiketter) etiketter.hidden = false;
-  };
-
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    const sparaKnapp = form.querySelector('button[type="submit"]');
-    sparaKnapp.disabled = true;
-    sparaKnapp.textContent = "Sparar…";
-
-    const nya = inmatning.value
-      .split(",")
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
-
-    const { data, error } = await supabase
-      .from("recipes")
-      .update({ tags: nya })
-      .eq("id", r.id)
-      .select("tags")
-      .maybeSingle();
-
-    if (error || !data) {
-      sparaKnapp.disabled = false;
-      sparaKnapp.textContent = "Spara";
-      alert(`Kunde inte spara: ${error?.message ?? "ingen rad ändrades"}`);
-      return;
-    }
-
-    location.reload();
-  };
 }
 
 if (session && valtId && recept.length > 0) {
-  visaNyckelordRedigering(recept[0]);
+  visaRedigeraLank(recept[0]);
 }

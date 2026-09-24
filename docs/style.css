@@ -269,16 +269,6 @@ h3 {
   font-size: .75rem;
   color: var(--dampad);
 }
-.nyckelord-form {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: .5rem;
-}
-.nyckelord-knappar {
-  display: flex;
-  gap: .5rem;
-}
 
 /* ===== Textfält (gemensamt) ===== */
 /* font-size 1rem överallt: mindre än så får iPhone att zooma in */
@@ -306,10 +296,6 @@ textarea:focus {
   padding: .7rem 1rem;
   border-radius: 999px;
 }
-.nyckelord-form input {
-  padding: .6rem .9rem;
-  border-radius: 999px;
-}
 
 /* ===== Knappar ===== */
 /* Fyllda knappar */
@@ -329,8 +315,7 @@ textarea:focus {
 
 /* Diskreta knappar med kantlinje */
 .dela,
-.redigera-nyckelord,
-.nyckelord-knappar button,
+.redigera,
 #admin .admin-knapp {
   border: 1px solid var(--linje);
   border-radius: 999px;
@@ -349,20 +334,17 @@ textarea:focus {
   border-color: var(--accent);
   color: var(--accent);
 }
-.redigera-nyckelord {
+.redigera {
+  display: inline-block;
   margin-top: .75rem;
   padding: .3rem .8rem;
   border-style: dashed;
   font-size: .75rem;
+  text-decoration: none;
 }
-.nyckelord-knappar button {
-  padding: .45rem 1.1rem;
-  font-size: .8rem;
-}
-.nyckelord-knappar button[type="submit"] {
-  background: var(--accent);
+.redigera:hover {
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent);
 }
 #admin .admin-knapp {
   display: inline-block;
