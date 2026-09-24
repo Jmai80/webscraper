@@ -93,8 +93,30 @@ form.onsubmit = async (e) => {
       .split(",")
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean),
-    scraped_at: new Date().toISOString(),
   };
+
+  // Redigering: spara mot receptets id, så att rätt rad ändras.
+  if (valtId) {
+    const { data, error } = await supabase
+      .from("recipes")
+      .update(recept)
+      .eq("id", valtId)
+      .select("id")
+      .maybeSingle();
+
+    knapp.disabled = false;
+
+    if (error || !data) {
+      status.textContent = `Misslyckades: ${error?.message ?? "ingen rad ändrades"}`;
+      return;
+    }
+
+    location.href = `./?recept=${valtId}`;
+    return;
+  }
+
+  // Nytt recept: Edge Functionen sparar och bygger om delningssidorna.
+  recept.scraped_at = new Date().toISOString();
 
   const { data, error } = await supabase.functions.invoke("scrape", {
     body: { recept },
