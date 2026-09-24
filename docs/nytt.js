@@ -14,6 +14,12 @@ function text(id) {
   return v === "" ? null : v;
 }
 
+// Värdet i ett sifferfält, eller null om det är tomt.
+function nummer(id) {
+  const v = document.getElementById(id).value.trim();
+  return v === "" ? null : Number(v);
+}
+
 // Ett textfält uppdelat i en lista, en rad per element.
 function rader(id) {
   return document.getElementById(id).value
@@ -38,6 +44,9 @@ form.onsubmit = async (e) => {
     title: text("titel"),
     description: text("beskrivning"),
     author: text("forfattare"),
+    servings: text("portioner"),
+    prep_minutes: nummer("forberedelse"),
+    cook_minutes: nummer("tillagning"),
     ingredients: rader("ingredienser"),
     instructions: rader("steg"),
     image_url: text("bild"),
