@@ -34,6 +34,44 @@ if (!session) {
   status.textContent = "Du måste vara inloggad. Logga in på startsidan först.";
 }
 
+// Skriver ett värde i ett fält, om det finns något att skriva.
+function fyll(id, varde) {
+  if (varde !== null && varde !== undefined) {
+    document.getElementById(id).value = varde;
+  }
+}
+
+// Med ?recept=<id> i adressen redigerar vi ett befintligt recept.
+const valtId = new URLSearchParams(location.search).get("recept");
+
+if (valtId && session) {
+  const { data: recept } = await supabase
+    .from("recipes")
+    .select("*")
+    .eq("id", valtId)
+    .maybeSingle();
+
+  if (!recept) {
+    status.textContent = "Hittade inget recept med den adressen.";
+  } else {
+    document.title = "Redigera recept";
+    form.querySelector("h2").textContent = "Redigera recept";
+    form.querySelector("button").textContent = "Spara ändringar";
+
+    fyll("titel", recept.title);
+    fyll("beskrivning", recept.description);
+    fyll("portioner", recept.servings);
+    fyll("forberedelse", recept.prep_minutes);
+    fyll("tillagning", recept.cook_minutes);
+    fyll("ingredienser", recept.ingredients.join("\n"));
+    fyll("steg", recept.instructions.join("\n"));
+    fyll("bild", recept.image_url);
+    fyll("kalla", recept.source_url);
+    fyll("forfattare", recept.author);
+    fyll("nyckelord", recept.tags.join(", "));
+  }
+}
+
 form.onsubmit = async (e) => {
   e.preventDefault();
   const knapp = form.querySelector("button");
