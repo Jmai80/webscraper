@@ -7,6 +7,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const form = document.getElementById("nytt");
 const status = document.getElementById("nytt-status");
+const taBort = document.getElementById("ta-bort");
 
 // Värdet i ett fält, eller null om det är tomt.
 function text(id) {
@@ -69,6 +70,9 @@ if (valtId && session) {
     fyll("kalla", recept.source_url);
     fyll("forfattare", recept.author);
     fyll("nyckelord", recept.tags.join(", "));
+
+    // Ta bort-knappen finns bara när ett befintligt recept är laddat.
+    taBort.hidden = false;
   }
 }
 
@@ -131,4 +135,27 @@ form.onsubmit = async (e) => {
   }
 
   location.href = `./?recept=${data.id}`;
+};
+
+// Tar bort receptet efter en bekräftelse, och går sedan till startsidan.
+taBort.onclick = async () => {
+  if (!confirm("Ta bort receptet? Det går inte att ångra.")) return;
+
+  taBort.disabled = true;
+  status.textContent = "Tar bort…";
+
+  const { data, error } = await supabase
+    .from("recipes")
+    .delete()
+    .eq("id", valtId)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    taBort.disabled = false;
+    status.textContent = `Misslyckades: ${error?.message ?? "inget recept togs bort"}`;
+    return;
+  }
+
+  location.href = "./";
 };
