@@ -72,7 +72,7 @@ if (valtId && session) {
     fyll("nyckelord", recept.tags.join(", "));
 
     // Ta bort-knappen finns bara när ett befintligt recept är laddat.
-    taBort.hidden = false;
+    if (taBort) taBort.hidden = false;
   }
 }
 
