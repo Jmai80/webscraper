@@ -187,6 +187,14 @@ falt.addEventListener("blur", () => {
 
 status.textContent = "";
 
+// Med ?sok=<ord> i adressen öppnas startsidan med sökningen redan gjord.
+const forifylltSok = params.get("sok");
+if (!valtId && forifylltSok) {
+  falt.value = forifylltSok;
+  document.body.classList.add("soker");
+  falt.dispatchEvent(new Event("input"));
+}
+
 const admin = document.getElementById("admin");
 
 function visaInloggning() {
