@@ -261,15 +261,20 @@ h3 {
   flex-wrap: wrap;
   gap: .4rem;
 }
-.nyckelord li {
+.nyckelord a {
+  display: block;
   padding: .2rem .7rem;
   border: 1px solid var(--linje);
   border-radius: 999px;
   font-family: system-ui, sans-serif;
   font-size: .75rem;
   color: var(--dampad);
+  text-decoration: none;
 }
-
+.nyckelord a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 /* ===== Textfält (gemensamt) ===== */
 /* font-size 1rem överallt: mindre än så får iPhone att zooma in */
 input,

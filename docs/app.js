@@ -55,7 +55,7 @@ function receptTillHtml(r) {
     .join("");
 
   const nyckelord = r.tags.length > 0
-    ? `<ul class="nyckelord">${r.tags.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`
+    ? `<ul class="nyckelord">${r.tags.map((t) => `<li><a href="./?sok=${encodeURIComponent(t)}">${esc(t)}</a></li>`).join("")}</ul>`
     : "";
 
   return `
