@@ -115,7 +115,7 @@ form.onsubmit = async (e) => {
       return;
     }
 
-    location.href = `./?recept=${valtId}`;
+    location.href = `./?recept=${valtId}&sparat=1`;
     return;
   }
 
