@@ -239,6 +239,7 @@ function visaSparaFormular() {
     <p id="spara-status"></p>
         <div class="admin-rad">
       <a href="nytt.html" class="admin-knapp">Nytt recept</a>
+      <a href="atgarda.html" class="admin-knapp">Att åtgärda</a>
       <button id="logga-ut" class="admin-knapp">Logga ut</button>
     </div>`;
 
