@@ -45,6 +45,9 @@ function fyll(id, varde) {
 // Med ?recept=<id> i adressen redigerar vi ett befintligt recept.
 const valtId = new URLSearchParams(location.search).get("recept");
 
+// Med &fran=atgarda kom vi från listan Att åtgärda, och ska tillbaka dit efteråt.
+const franAtgarda = new URLSearchParams(location.search).get("fran") === "atgarda";
+
 if (valtId && session) {
   const { data: recept } = await supabase
     .from("recipes")
@@ -115,7 +118,7 @@ form.onsubmit = async (e) => {
       return;
     }
 
-    location.href = `./?recept=${valtId}&sparat=1`;
+    location.href = franAtgarda ? "atgarda.html" : `./?recept=${valtId}&sparat=1`;
     return;
   }
 
@@ -137,7 +140,7 @@ form.onsubmit = async (e) => {
   location.href = `./?recept=${data.id}`;
 };
 
-// Tar bort receptet efter en bekräftelse, och går sedan till startsidan.
+// Tar bort receptet efter en bekräftelse, och går sedan till startsidan (eller listan Att åtgärda).
 taBort.onclick = async () => {
   if (!confirm("Ta bort receptet? Det går inte att ångra.")) return;
 
@@ -157,5 +160,5 @@ taBort.onclick = async () => {
     return;
   }
 
-  location.href = "./";
+  location.href = franAtgarda ? "atgarda.html" : "./";
 };
