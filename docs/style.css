@@ -416,6 +416,25 @@ textarea:focus {
   color: var(--dampad);
 }
 
+/* ===== Att åtgärda (atgarda.html) ===== */
+.atgarda {
+  max-width: 640px;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+}
+#atgarda-status {
+  font-family: system-ui, sans-serif;
+  font-size: .8rem;
+  color: var(--dampad);
+}
+.brister {
+  display: block;
+  margin-top: .2rem;
+  font-family: system-ui, sans-serif;
+  font-size: .75rem;
+  color: var(--accent);
+}
+
 /* ===== Mobil ===== */
 @media (max-width: 640px) {
   body { padding: 0 .75rem; }
