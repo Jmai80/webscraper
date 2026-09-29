@@ -33,7 +33,7 @@ function radTillHtml(r, b) {
     : `<span class="traff-tom"></span>`;
 
   return `
-<a class="traff" href="nytt.html?recept=${r.id}">
+<a class="traff" href="nytt.html?recept=${r.id}&fran=atgarda">
   ${bild}
   <span>
     <span class="traff-titel">${esc(r.title)}</span>
