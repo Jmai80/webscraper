@@ -195,6 +195,13 @@ if (!valtId && forifylltSok) {
   falt.dispatchEvent(new Event("input"));
 }
 
+// Med &sparat=1 i adressen visas en kort bekräftelse efter redigering.
+if (valtId && params.get("sparat")) {
+  status.textContent = "Ändringarna är sparade";
+  history.replaceState(null, "", `?recept=${valtId}`);
+  setTimeout(() => (status.textContent = ""), 3000);
+}
+
 const admin = document.getElementById("admin");
 
 function visaInloggning() {
