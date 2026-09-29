@@ -42,6 +42,12 @@ function fyll(id, varde) {
   }
 }
 
+// Ber Edge Functionen bygga om delningssidorna. Svaret spelar ingen roll:
+// misslyckas det byggs sidorna ändå om vid nästa nya recept.
+async function byggOm() {
+  await supabase.functions.invoke("scrape", { body: { bygg: true } });
+}
+
 // Med ?recept=<id> i adressen redigerar vi ett befintligt recept.
 const valtId = new URLSearchParams(location.search).get("recept");
 
@@ -118,6 +124,7 @@ form.onsubmit = async (e) => {
       return;
     }
 
+    await byggOm();
     location.href = franAtgarda ? "atgarda.html" : `./?recept=${valtId}&sparat=1`;
     return;
   }
@@ -160,5 +167,6 @@ taBort.onclick = async () => {
     return;
   }
 
+  await byggOm();
   location.href = franAtgarda ? "atgarda.html" : "./";
 };
